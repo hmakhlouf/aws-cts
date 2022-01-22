@@ -1,0 +1,182 @@
+RedShift Steps
+---------------
+
+  1. Create an IAM role
+
+	1. Select IAM service
+	2. Select Roles (option in left side menu)
+	3. Select Redshift ( as a Service )
+	   -> Select Redshift Customizable (as Use case)
+	4. Click next to go to Permissions
+	5. Select AmazonS3ReadOnlyAccesss as a policy (you can type in the search)
+	6. Click next to add Tags
+	7. No need to add any Tags here. Just click next Review
+	8. Add a Role name => DemoRoleRedshift
+	9. Click on create Role button.
+
+
+  2. Create a "Security Group" in EC2
+
+	1. Select EC2 service
+	2. Select 'Security Groups' option  (option in left side menu under Network and Security)
+	3. Click on 'Create Secutiry Group' Button
+	4. Give a name to your secutiry group => DemoSecurityGroupRedshift
+	5. Add an Inbound Rule (click on Add Rule)
+
+  3. Launch redshift Cluster
+
+	1. Go to Redshift dashboard & click on Launch Cluster
+
+	2. Fill the Cluster Details
+		i. Cluster identifier	: demo-cluster   (Valid characters are a-z (lowercase only) and - (hyphen))
+		ii. Type		: Free Trail
+		iii. Database Configuration
+		    a. Admin User Name	: demo_admin
+		    b. Admin Password	: DemoAdmin123
+		
+	3. Fill Node Configuration details
+		i. Node Type – dc2large
+		ii. Cluster Type – Single Node
+
+	4. Fill Additional Configuration details
+		i. Select the security group – select one created in step 2
+		ii. AIM role – select the one created in step 1
+		iii. Leave all others ad defaults
+
+	5. Review and Launch Cluster
+
+
+  4. Working with the Redshift Cluster
+
+	1. Launch the Query Editor
+		NOTE: Query editor can be used to lauch queries that can be completed within 2 min.
+		      Queries would timeout automatically after 2 mins.
+
+	2. Run a few SQL commands:
+		a. create table students (id int, name varchar(30), age int);
+		b. insert into students values (100, 'Raju', 45), (101, 'Ramesh', 40),(102, 'Vijay', 35); 
+
+  5. Connecting to Redshift database from SQLWorkBenchJ
+
+	1. Download SQLWorkBench/J
+		URL: https://www.sql-workbench.eu/downloads.html
+		   -> Generic package for all systems including all optional libraries (sha1)
+
+		Unzip the downloaded folder ad click on the application exe file
+		   -> D:\Workbench-Build127-with-optional-libs\SQLWorkbench64
+
+	2. Download Redshift JDBC Driver
+
+		URL: https://docs.aws.amazon.com/redshift/latest/mgmt/jdbc20-download-driver.html
+		Driver Jar File: D:\AWSSoftware\redshift-jdbc42-2.1.0.1\redshift-jdbc42-2.1.0.1.jar
+
+
+
+
+
+Creating a Snapshot
+-------------------
+
+Querying public S3 buckets
+--------------------------
+
+Run the following commands from AWS CLI:
+
+	
+
+
+jdbc:redshift://demo-cluster-redshift.cly6rp6vkhk0.us-east-2.redshift.amazonaws.com:5439/dev
+=========================================================
+
+
+CREATE TABLE catdemo( catid smallint, catgroup varchar(10), catname varchar(10), catdesc varchar(50));
+
+copy catdemo from 's3://awssampledbuswest2/tickit/category_pipe.txt'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+region 'us-west-2';
+
+
+
+---------------------------
+
+
+CREATE TABLE part
+(
+  p_partkey     INTEGER NOT NULL,
+  p_name        VARCHAR(22) NOT NULL,
+  p_mfgr        VARCHAR(6) NOT NULL,
+  p_category    VARCHAR(7) NOT NULL,
+  p_brand1      VARCHAR(9) NOT NULL,
+  p_color       VARCHAR(11) NOT NULL,
+  p_type        VARCHAR(25) NOT NULL,
+  p_size        INTEGER NOT NULL,
+  p_container   VARCHAR(10) NOT NULL
+);
+
+copy part from 's3://awssampledbuswest2/ssbgz/part'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+select count(*) from part;
+
+CREATE TABLE supplier
+(
+  s_suppkey   INTEGER NOT NULL,
+  s_name      VARCHAR(25) NOT NULL,
+  s_address   VARCHAR(25) NOT NULL,
+  s_city      VARCHAR(10) NOT NULL,
+  s_nation    VARCHAR(15) NOT NULL,
+  s_region    VARCHAR(12) NOT NULL,
+  s_phone     VARCHAR(15) NOT NULL
+);
+
+copy supplier from 's3://awssampledbuswest2/ssbgz/supplier'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+
+CREATE TABLE customer
+(
+  c_custkey      INTEGER NOT NULL,
+  c_name         VARCHAR(25) NOT NULL,
+  c_address      VARCHAR(25) NOT NULL,
+  c_city         VARCHAR(10) NOT NULL,
+  c_nation       VARCHAR(15) NOT NULL,
+  c_region       VARCHAR(12) NOT NULL,
+  c_phone        VARCHAR(15) NOT NULL,
+  c_mktsegment   VARCHAR(10) NOT NULL
+);
+
+=========================================================
+		
+copy catdemo from 's3://awssampledbuswest2/tickit/category_pipe.txt'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+region 'us-west-2';
+
+
+
+
+
+
+=========================
+
+AWS CLI
+--------
+
+Installing:
+
+https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html
+
+
+aws s3 ls s3://awssampledbuswest2/ssbgz
+
+
+Access key ID		---
+Secret access key	---
+
+
+Database name: 		dev
+Admin user name: 	---
+Admin user password: 	---
