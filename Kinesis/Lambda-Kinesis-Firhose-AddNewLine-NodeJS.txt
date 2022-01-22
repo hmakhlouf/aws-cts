@@ -1,0 +1,20 @@
+console.log('Loading function');
+
+exports.handler = async (event, context) => {
+    
+    
+    const output = event.records.map((record) => {
+        
+        let decoded = (new Buffer(record.data, "base64")).toString("utf8");
+        let result = decoded + "\n";
+        const encoded = (new Buffer(result, "utf8")).toString("base64");
+        
+        return {
+            recordId: record.recordId,
+            result: 'Ok',
+            data: encoded,
+        };
+    });
+    console.log(`Processing completed.  Successful records ${output.length}.`);
+    return { records: output };
+};
