@@ -1,0 +1,70 @@
+
+ Example 1: ETL from one S3 bucket to another S3 bucket
+ ------------------------------------------------------
+
+   1. Load the required data to S3
+	1.1 Create two folders in s3 to read from and write to:
+		s3://iquiz.glue/movies-s3-to-s3/read
+		s3://iquiz.glue/movies-s3-to-s3/write
+	1.2 Load the dataset to the read folder
+		Upload the movies-data.csv file to s3://iquiz.glue/movies-s3-to-s3/read folder
+
+   2. Create an IAM Role (MyAWSGlueServiceRole) for Glue with the following policies:			
+	Service: Glue
+	Policies:   
+	  -> AmazonS3FullAccess
+	  -> AmazonDynamoDBFullAccess
+	  -> AmazonRedshiftFullAccess
+	  -> AWSGlueServiceRole
+
+   3. Connect to AWS Glue service and create a Glue crawler:
+	3.1  In the left panel of the Glue management console click Crawlers.
+	3.2  Click the blue Add crawler button.
+	3.3  Give the crawler a name such as glue-s3-s3-crawler.
+	3.4  In Add a data store menu choose S3 and select the bucket you created. 
+		-> Drill down to select the folder : s3://iquiz.glue/movies-s3-to-s3/read
+	3.5  In Choose an IAM role create new. 
+		-> Name the role to for example glue-blog-tutorial-iam-role.
+	3.6  In Configure the crawler’s output add a database called glue-s3-s3-db.
+
+   4. Run the crawler
+	4.1  Goto Crawlers link to list all crawlers
+	4.2  Tick the crawler that you created and Click Run crawler.
+
+		Notes:  
+		------
+		Once the data has been crawled, the crawler creates a metadata table from it. 
+		You find the results from the Tables section of the Glue console. 
+		The database that you created during the crawler setup is just an arbitrary way 
+		of grouping the tables.
+
+		Glue tables don’t contain the data but only the instructions how to access the data.
+
+    5. Create the Glue job
+	 5.1  Name the job as  glue-s3-s3-job.
+	 5.2  Choose the same IAM role that you created for the crawler. 
+	 5.3  Type: Spark.
+	 5.4  Glue version: Spark 2.4, Python 3 (or whatever is the default)
+	 	-> This job runs: A new script to be authored by you.
+	 5.5  Security configuration, script libraries, and job parameters
+		-> Worker type - Standard
+	 	-> Number of workers: 2.  (This is the minimum and costs about 0.15$ per run)
+	 	-> Job timeout: 10. Prevents the job to run longer than expected.
+	 5.6  Choose a data source - select the source 'read'
+	 5.7  Choose a transform type - Change schema
+	 5.8  Choose a data target - 'read'
+	 5.9  Click Next and then 'Save job and edit the script'.
+
+
+    6. Provide the script for your ETL functionality
+	  6.1 Write the script in the editor (E:\AWS\0-Material\Glue\scripts\glue-s3-to-s3.py)
+	  6.2 Save the code in the editor - Click save button.
+          6.3 click Run job.
+
+    7. Check the results
+	  7.1 Once the the job is complete the results of the script are stored in output s3 folder
+	      -> Output s3 folder: s3://iquiz.glue/movies-s3-to-s3/write/
+
+
+
+   Ref URL: https://data.solita.fi/aws-glue-tutorial-with-spark-and-python-for-data-developers/

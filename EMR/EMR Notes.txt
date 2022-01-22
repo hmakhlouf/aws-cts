@@ -1,0 +1,286 @@
+
+   URLs:
+
+	https://docs.aws.amazon.com/emr/index.html
+ 	https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-gs.html
+ 
+
+  ------------------------------------------
+     Create EMR Cluster
+  ------------------------------------------
+
+	- Open EMR Service
+	- Click on 'Create Cluster'
+		- Fill the details and wait for the cluster to complete the provisioning.
+
+   ------------------------------------------
+     SSH to EMR master instance
+   ------------------------------------------
+
+	- When you create an EMR instance, an EC2 cluster with one master and two slaves
+	  is launched.
+	- You can SSH to master node via PuTTY
+		NOTE: Make sure SSH is added to the Inbound rules of the Security Group of
+		      the master instance.
+	
+   ------------------------------------------	
+      Copy a file from S3 to EMRFS
+   ------------------------------------------
+
+	- Go to Steps Tab
+		- Add a step to copy files from S3 to EMRFS
+			- Step Type: Custom JAR	
+			- Name: CopyDataFromS3  	(can be any name)
+			- JAR Location: command-runner.jar
+			- Arguments:
+				s3-dist-cp 
+			          --s3Endpoint=s3.amazonaws.com
+				  --src=s3://iquiz.emr/sampledata/file1.txt
+				  --dest=hdfs:///output
+
+				Ex:
+				s3-dist-cp --s3Endpoint=s3.amazonaws.com --src=s3://iquiz.sampledata/wordcount.txt --dest=hdfs:///output
+				
+				note: entire command should be in a single line.
+				ref url: https://docs.aws.amazon.com/emr/latest/ReleaseGuide/UsingEMR_s3distcp.html
+
+
+	-> Check the output in SSH terminal
+		-> Login to SSH terminal (user: ec2-user)
+	 	-> Type the following command to check the output:
+			hadoop fs -ls hdfs:///output
+
+
+	-> NOTE: https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-commandrunner.html
+	   Checkout the above link for details about command-runner.jar
+
+    	
+		
+   ------------------------------------------
+     Run a MapReduce Wordcount program
+   ------------------------------------------
+
+	- Add your MR Jar file and input file to an S3 bucket
+	- Go to Steps Tab
+		- Add a step to run an MR program
+			- Step Type: Custom JAR	
+			- Name: MRWordCount  	(can be any name)
+			- JAR Location: <Browse S3 and locate your MR jar file>
+			- Arguments:
+				<Give Each Command line argument in a separate line>
+				Ex:
+				WordCount s3://iquiz.emr/mapreduce/wordcount/input.txt s3://iquiz.emr/mapreduce/wordcount/output
+
+	- The program will be executed and output files are created in the mentioned output location.
+	
+   ------------------------------------------			
+      Run a Hive Script
+   ------------------------------------------
+
+	- Add your Hive script file and input file to an S3 bucket
+	- Go to Steps Tab
+		- Add a step to run a hive script
+			- Step Type: Hive Program
+			- Name: Churn Modelling
+			- Script S3 Location: 
+				s3://iquiz.emr/hive/hive_script_churn_modelling.hql
+				(s3://us-east-1.elasticmapreduce.samples/cloudfront/code/Hive_CloudFront.q)
+			- Input S3 Location:
+				s3://iquiz.emr/hive/Churn_Modelling.csv
+				(s3://us-east-1.elasticmapreduce.samples)
+			- Output S3 Location:
+				You can give a location from your s3 account:
+				s3://iquiz.emr/hive/output
+				(ex: s3://iquiz.mapreduce/hiveoutput1)
+
+	- The program will be executed and output files are created in the mentioned output location.
+				
+						
+   IMP NOTE:  If you want to use hive shell in SSH, use the user 'hadoop' (not ec2-user)
+	      ex: hadoop@ec2-44-192-123-67.compute-1.amazonaws.com
+
+
+
+	s3://us-east-1.elasticmapreduce.samples/cloudfront/data
+	s3://us-east-1.elasticmapreduce.samples/cloudfront/code/Hive_CloudFront.q
+	https://s3.console.aws.amazon.com/s3/buckets/support.elasticmapreduce?region=us-east-1&tab=objects
+
+
+   ------------------------------------------
+     Presto & Hive
+   ------------------------------------------
+
+	-> Presto is shipped with several connectors
+	
+	-> To access S3 data Presto uses Hive Connector.
+	-> Presto only uses Hive to create the meta data.
+	-> Presto uses Hive MetaStore service to maintain its metadata.
+
+	Demo:
+
+	1. Spin up an EMR cluster
+		-> Make sure to select an EMR version that has Presto available.
+
+	2. SSH to the EMR master node as 'hadoop' user
+
+	3. Connect to hive CLI and create an external table:
+
+		create external table ratings 
+		(userId int, movieId int, rating double, ts bigint)
+		row format delimited
+		fields terminated by ','
+		lines terminated by '\n'
+		location 's3://iquiz.emr/hive/movielens_ratings/'        		(wikistats)
+
+command
+---------
+create external table ratings(userId int, movieId int, rating double, ts string) row format delimited fields terminated by ',' lines terminated by '\n' location 's3://iquiz.emr/hive/movielens_ratings/'
+
+
+
+	4. Exit the HiveCLI and connect to Presto CLI Shell
+
+		$ presto-cli --catalog hive
+
+	5. Query from the table created in Hive
+
+		$ select * from default.wikistats limit 10;
+
+	Thats it..  You can analyze Hive data using Presto..   (.. similar to Impala)
+
+
+
+   ------------------------------------------
+      DynamoDB and Hive
+   ------------------------------------------
+
+	Steps:  
+		1. Load data into HDFS 
+		2. Create an DynamoDB Table
+		3. Load the data into DynamoDB table
+		4. Query DynamoDB table from Hive.
+
+
+	Demo:
+
+	1. Spin up an EMR cluster
+
+	2. SSH to the EMR master node as 'hadoop' user
+	
+	3. Copy the dataset from s3 to your local machine.
+
+		$aws s3 cp s3://iquiz.datasets/features-csv/features.csv .
+
+                --> You can also download public datasets
+		$wget https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/samples/features.zip			 
+		$unzip features.zip)
+
+	4. Connect to Hive CLI, create a table and load the above data.
+
+		$hive
+
+		hive> create table hive_features (id bigint, name string, class string, state string, lat double, long double, elev_in_feet bigint) row format delimited fields terminated by ',' lines terminated by '\n';
+
+		hive> load data local inpath './features.csv' overwrite into table hive_features;
+
+		hive> select state, count(*) from hive_features group by state;
+
+		Now, we will copy the data from the above table into a dynamodb table.
+
+	5. Go to DynamoDB service from AWS management console.
+
+		Table Name: 	Features
+		Partition-Key: 	id  (Type: Numeric)
+
+	6. Go back to HiveCLI and create an external Hive-DynamoDB mapped table:
+		
+		create external table dynamodb_features 
+		(id bigint, name string, class string, state string, lat double, long double, elev_in_feet bigint) 
+		row format delimited fields terminated by ',' 
+		lines terminated by '\n' 
+		stored by 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler' 
+		tblproperties(
+			"dynamodb.table.name" = "Features", 
+			"dynamodb.column.mapping"= "id:Id,name:Name,class:Class,state:State,lat:Latitude,long:Longitude,elev_in_feet:Elevation"
+		);
+
+
+		create external table dynamodb_features (id bigint, name string, class string, state string, lat double, long double, elev_in_feet bigint) row format delimited fields terminated by ',' lines terminated by '\n' stored by 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler' tblproperties("dynamodb.table.name" = "Features", "dynamodb.column.mapping"= "id:Id,name:Name,class:Class,state:State,lat:Latitude,long:Longitude,elev_in_feet:Elevation");
+
+
+		At this point, neither "dynamodb_features" table (which is a hive external table), nor
+		Features table (which is a DynamoDB table) has any data.
+
+		
+       7. Now, load data into "dynamodb_features" table.
+
+		hive> insert overwrite table dynamodb_features select id, name, class, state, lat, long, elev_in_feet from hive_features limit 100;
+
+		This will load data not only into "dynamodb_features" but also populates the data
+		into Features table, which is a DynamoDB table.
+
+	8. Now, we can run queries on "dynamodb_features" which fetches data from 'Features' table.
+
+		hive> select distinct feature_class from dynamodb_features
+		      order by feature_class;
+
+
+   	=> EMR Architecture
+
+	=> EMR Cluster Life Cycle
+
+	=> EMR Auto-Scaling
+
+
+
+
+
+=======================================
+Commands
+=======================================
+-------------------
+Presto and Hive
+-------------------
+create external table ratings(userid int, movieid int, rating double, ts string)
+row format delimited
+fields terminated by ','
+lines terminated by '\n'
+location 's3://iquiz.datasets/hiveexternal/'; 
+
+NOTE: Make sure you have the dataset "ratingsNoHeader.csv' in the above s3 directory
+
+
+$ presto-cli --catalog hive
+$ select * from default.ratings limit 10;
+
+-------------------
+DynamoDB and Hive
+-------------------
+$wget https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/samples/features.zip
+$unzip features.zip
+
+URL: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/samples/features.zip
+
+
+In Hive Shell
+---------------
+create table hive_features
+(id bigint, name string, class string, state string, latitude double, longitude double, elevation bigint) 
+row format delimited 
+fields terminated by '|'
+lines terminated by '\n';
+
+load data local inpath './features.txt' overwrite into table hive_features;
+
+create external table dynamodb_features(id bigint, name string, class string, state string, latitude double, longitude double, elevation bigint) 
+stored by 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler'
+tblproperties("dynamodb.table.name" = "Features",
+"dynamodb.column.mapping" = "id:Id,name:Name,class:Class,state:State,latitude:Latitude,longitude:Longitude,elevation:Elevation");
+
+insert overwrite table dynamodb_features
+select id, name, class, state, latitude, longitude, elevation
+from hive_features
+limit 100;
+
+select distinct class from dynamodb_features
+order by class;
