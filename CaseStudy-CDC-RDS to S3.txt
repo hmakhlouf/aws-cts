@@ -1,0 +1,162 @@
+CDC :  RDS (MySQL) to S3
+------------------------
+
+  1. Go to RDS service
+
+  2. Create a new parameter group
+
+	-> Go to RDS service
+	-> Select 'Parameter groups' left-menu option.
+	-> Click on 'Create a new parameter group'
+		-> Parameter group family: mysql8.0
+		-> Group name: RdsMySqlPg
+		-> Description: Param group CDC Pipeline
+	-> Create the parameter group
+	-> Select the Parameter group from the list.
+	-> Click on 'Edit Parameters' button	
+	-> Search for "binlog_format" and select the value to "ROW"
+	-> Click on 'Save Changes'
+
+   3. Setup an RDS Database
+
+	-> Open the RDS service and click on 'Create Database' button
+
+	-> Select MySQL  (this is out source endpoint)
+
+	Database Options:
+
+	   -> Templates: Free-tier
+	   -> DB Instance Identifier: Give a DB name
+	   -> Credential Settings:
+		Master username : admin
+		Master password : <specify a password>
+	   -> DB instance class
+		Burstable classes : db.t2.micro
+	   -> Storage: leave the defaults
+	   -> Storage autoscaling: Uncheck the option for autoscaling
+	   -> Availability & durability: leave the defaults
+	   -> Connectivity		
+		Public access: Yes
+		-> leave others as defaults
+	   -> VPC security group : Choose existing (i.e default SG)
+	   -> Availability Zone:  No Preference
+	   -> Database Authentication: Password authentication
+	   -> Additional Configuration
+		Database Options
+			-> leave the defaults
+		DB parameter groups 
+			-> Select the one we created in step 2.
+			-> This is required for MySQL to connect to DMS
+	   -> Backup
+		NOTE: Keep this checked (need this for CDC pipeline)
+	   -> Maintenence
+		-> Uncheck the 'Enable auto minor version upgrade'
+	   -> Click on 'Create database' button.
+	
+	   ---------------------------------
+
+           NOTE: In the above, we need to the parameter group and set the 
+	 	"binlog_format" to ROW in that parameter group.	
+	  
+          	This is required for DMS to work properly in out use-case.
+
+	  	** For DBMS to work we need to two things in the above config:
+			1. Enable backup
+			2. The parameter group should have "binlog_format"  set to ROW
+	 
+ 	   ---------------------------------
+
+   4. Create S3 Bucket (this is our destination endpoint)
+
+	Bucket-Name: cdc-pyspark-full-load
+	Block all public access: uncheck
+		-> Click on the acknowledgement checkbox
+
+   5. Create DMS Source endpoint.  (DMS - Data Migration Service) 
+
+	-> Open the DMS service
+	-> Click on 'Endpoints' option from the left-menu
+	-> Click on 'Create Endpoint' button.
+
+	-> Endpoint Type: Source Endpoint
+	    -> Check the option: Select RDS DB instance
+	    -> Select the instance created in Step 3
+
+	-> Endpoint Configuration
+	    -> Details will be populated based on the selected instance.
+	    -> Endpoint identifier
+		  -> Provide an identifiable name (ex: 'cdc-rds-mysql-pyspark')
+	    -> Access to endpoint database
+		  -> Select 'Provide access information manually'
+			-> Check the details
+			-> enter the password  (master password in step 3)
+
+	-> Test endpoint connection
+	    -> Click on 'Run Test' button
+		-> Make sure the status comes out as 'successful'
+
+	-> Click on 'Create endpoint' button
+	
+   6. Create a DMS IAM Role (to be used in next step)
+
+	-> Open IAM service
+	-> Click on 'Create role' button
+	-> Select 'DMS' as the service
+	-> Permissions
+		-> Attach 'AmazonS3FullAccess' policy
+	-> Creare role
+		-> Role name: iam-cdc-s3
+	-> Click on 'Create role' button.
+	-> Click on the created role
+		-> Copy the 'Role ARN' and save it (you need it in the next step)	
+
+   7. Create DMS Destination Endpoint.	
+
+	-> Open the DMS service
+	-> Click on 'Endpoints' option from the left-menu
+	-> Click on 'Create Endpoint' button.
+	-> Endpoint Type: Target Endpoint
+	-> Endpoint Configuration
+	    -> Endpoint identifier: Provide a name (ex: 'cdc-s3-pyspark')
+	    -> Target Engine: Amazon S3
+	    -> Service access role ARN: Specify the ARN of the IAM role created in step 5.
+	    -> Bucket Name: Specify the bucket created in step 4 (ex: cdc-pyspark-full-load)
+	    -> Bucket Folder: --  (you may specify one but we can use the bucket itself as well) 
+	-> Test endpoint connection
+	    -> Click on 'Run Test' button
+		-> Make sure the status comes out as 'successful'
+	-> Click on 'Create endpoint' button
+
+
+   8. Creating DMS Instance
+
+	-> Open the DMS service
+	-> Click on 'Replication instances' option from the left menu
+	-> Click on 'Create replication instance' button
+
+	-> Create Replication Instance
+		-> Name: Name must be unique in your region (ex: cdcrdss3-pyspark)
+		-> Instance class: dms.t3.micro  (this is the cheapest)
+		-> VPC: select the default vpc from the dropdown.
+	
+		-> Advanced security and network options: no changed required
+		-> Maintenence: no changed required
+		-> Tags: no changed required
+
+		-> Click on 'Create' button
+		
+    	
+   9. Download and install 'MySQL' (we need 'MySQL workbench')
+	  -> Go to URL: https://www.mysql.com/downloads/
+	  -> Click on 'MySQL Community (GPL) Downloads' link (towards end of the page)
+		-> URL: https://dev.mysql.com/downloads/
+	  -> Click on 'MySQL Installer for Windows'
+		-> URL: https://dev.mysql.com/downloads/installer/
+	  -> Click on the first "Download' button (size: 2.3 MB)  
+	  -> Click on 'No thanks, just start my download.' link (no need to login/signup)
+
+
+
+
+
+
