@@ -1,0 +1,441 @@
+		
+		
+  Create EC2 Key Pair
+  -------------------
+	We can either create a key pair or use an existing one while creating an EC2 instance.
+	It is not good practice to create key pairs while creating EC2 instances.
+
+	-> Login into AWS Web Console.
+	
+	-> Search for EC2 and go to EC2 Console.
+
+	-> On the left sidebar, you have EC2 Key Pair under Security and Networking. 
+	   Click on EC2 Key Pair and then click on “Create Key Pair”.
+
+	-> Make sure to download the pem file and save it to the standard location. 
+	   You need this later to connect to the EC2 instance.
+
+	Let us understand what happens when we create a Key Pair.
+	--------------------------------------------------------
+		A random private key and the associated public key will be created.
+
+		Private Key files will be provided to you for download.
+
+		Public Key will be managed somewhere inside AWS repositories.
+
+		When you launch an ec2 instance with a specific key pair, the public key will be added to authorized_keys on the server under standard user.  
+  
+	Some important notes:
+	---------------------
+		=> We use a .pem file for Linux/Mac and .ppk file for windows via puTTY) for the
+		   private key.
+		=> The .pem file is usually/conventionally stored in .ssh folder in user path
+			(ex: /home/kanak/.ssh/mykey.pem)
+		=> The permissions on the .pem file should be 600 (rw-------)
+		=> The permissions on the .ssh folder itself should be drwx------ (i.e 700)
+		
+		EC2 Sandard user names:		
+			ec2-user  	: for 'Amazon Linux' instances
+			ubuntu		: for 'Ubuntu' instances
+
+
+  Launching an EC2 instance
+  -------------------------
+
+	-> Select ‘Launch Instance’ from EC2 service main page
+
+	-> Choose an Amazon Machine Image (AMI)
+		NOTE: Make a note of ‘free tier eligible’ if you want that.
+
+	-> Choose an Instance Type (such as t2.micro)
+		NOTE: Make a note of ‘free tier eligible’ if you want that.
+
+	-> Configure Instance Details
+		Your instance will be created with a VPC network and a public IP
+
+	-> Add Storage
+
+	-> Add Tags
+
+	-> Configure Security Group
+
+	-> Review Instance Launch
+
+	-> Create a Key-pair or choose a key-pair that is already created.
+		A key-pair is used to access an instance. 
+		It consists of a public key and private key. 
+		The public-key is kept by AWS and the private key (.pem file) is to be downloaded and kept securely. 
+		You need to provide this to authenticate an instance.
+
+  Connecting to Linux EC2 using EC2 Instance Connect
+  --------------------------------------------------
+
+	-> Select the EC2 instance you want to connect to.
+
+	-> Click on EC2 Instance Connect tab
+		In this, all the details such as Instance Id, Public IP address and User name are pre-populated.
+
+	-> Click on Connect button to connect to the EC2 instance over a web browser 
+
+
+  Connecting to a Linux EC2 instance using SSH
+  --------------------------------------------
+
+	-> Select the EC2 instance and select 'Connect' button. Click on the 'SSH Client' tab
+		Here you find the command to connect to EC2 using SSH. 
+		Copy this command. 
+		Example: ssh -i "webaccess-nvirginia.pem" ec2-user@ec2-3-80-227-2.compute-1.amazonaws.com
+
+	-> Now open a Windows/Linux terminal and cd to the directory where the .pem file (the private key) is saved.
+		This is the file you downloaded when you created a Key-pair while launching an EC2 instance.
+
+	-> Run the command you copied earlier to connect to the instance
+			ssh -i ~/.ssh/mykey.pem ec2-user@ec2-3-80-227-2.compute-1.amazonaws.com
+			
+	-> This will launch an SSH terminal connecting to the instance. 
+	
+			hostname -f
+			uname -a
+			
+	-> Now install Apache2 webserver
+		
+			sudo apt update
+			sudo apt install -y apache2
+			sudo systemctl status apache2
+			# Hit Ctrl+C to come out of the command output
+ 
+			# Confirm that the apache server is running on port 80 using telnet
+			telnet localhost 80
+			telnet ec2-34-232-68-20.compute-1.amazonaws.com 80			
+		
+
+  Connecting to a Windows EC2 instance using RDP client
+  -----------------------------------------------------
+
+	-> Select the Windows EC2 instance you want to connect to and click on the RDP Client tab.
+	-> Click on “Get password” link
+	-> Browse and select the .pem file (which you created while launching the instance)
+	-> Click on “Decrypt password” button.
+	-> Store the Public DNS, User name and Password some where. You need these to connect using RDP client.
+	-> Now open an RDP client (Remote Desktop Client is pre-installed on Windows)
+	-> Connect using the Public DNS
+	-> Enter User name and Password and connect.
+
+	NOTE: To connect to EC2 via RDP, your Security Group associated with the EC2 instance 
+	should have an inbound rule defined to allow traffic from RDP
+
+
+
+ 
+  Launching EC2 instance with User-Data
+  -------------------------------------
+
+	"User Data" allows us to run some user-defined code when the instance starts up for the 
+	first time.
+
+	You find the option to add user-data at "Step 3: Configure Instance Details" page (towards
+	the bottom) where euther you can type/paste some user defined code or attached a pre-written
+	code file. 
+
+	-> Launch a Linux EC2 instance 
+	-> In the 'Step 3: Configure Instance Details' page scroll towards the end and select the
+	   "userdata-metadata.sh" script file. 
+
+	---------------------------------------------------------------------
+    		userdata-metadata.sh
+	---------------------------------------------------------------------
+	#!/bin/bash
+	yum update -y
+	yum install -y httpd
+	systemctl start httpd
+	systemctl enable httpd
+	EC2ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id) 
+	echo '<center><h1>The Instance ID of this Amazon EC2 instance is: EC2ID </h1></center>' > /var/www/html/index.txt
+	sed "s/EC2ID/$EC2ID/" /var/www/html/index.txt > /var/www/html/index.html
+	---------------------------------------------------------------------
+	
+	-> Review and launch the instance
+
+	-> Go to the security group attached to the instance add a rule to allow HTTP (type)
+	   from any IP4 address. (0.0.0.0/0)
+
+	-> Now paste the Public IP address of the instance in a browser address bar. This should
+	   display a web page with instance-id specified.
+
+
+    Looking into the meta-data of an instance
+    -----------------------------------------
+
+	-> Launch a Linux EC2 instance
+	-> Connect to the instance via SSH
+	-> Type the following command @ the prompt.
+
+		curl http://169.254.169.254/latest/meta-data
+		
+		=> This shows a lot of meta-data info. You can query these as shown below:
+			curl http://169.254.169.254/latest/meta-data/instance-id
+			curl http://169.254.169.254/latest/meta-data/public-ipv4
+
+
+
+    Access S3 from EC2 instance using access keys (and understand why it is unsecure)
+    ---------------------------------------------------------------------------------
+	
+	-> Go to IAM service and create a new user with a password  (ex: dummyuser1 / dummy@123)
+	-> Download the access keys of the user. (Access key ID, Secret access key)
+		-> You can create access keys from IAM 
+		-> IAM -> User -> 'Security Credentials' Tab -> 'Create access key' Button
+	-> Login to AWS accout using the above user credentials.
+
+	-> Open the EC2 service and launch a Linux AMI instance
+	
+	-> Select the EC2 instance, click on 'Connect' button
+	
+	-> Select 'EC2 instance connect' tab and Click on 'Connect' button.
+
+	-> Try to access S3 from here by typing the following command: "aws s3 ls"
+		-> You get the following message:
+			Unable to locate credentials. You can configure credentials by running "aws configure".
+		-> You have to configure aws account by providing your keys.
+
+	-> Type "aws configure" command
+		-> Enter you Access key ID, Secret access key, Default region name as prompted.
+
+	-> Now enter the command again: "aws s3 ls"
+		-> aws s3 ls
+		    	-> You can now access S3 service from EC2 instance. 
+
+	-> Switch to the directory ".aws". (/home/ec2-user/.aws)
+		-> cd ~/.aws
+
+	-> From this directory you can actually see the access-keys from in the file 'credentials'.
+		-> cat credentials
+			-> This shows the access keys in plain text (not even encrypted)
+
+	NOTE: Is is a securty risk as anyone who compromizes the instance can use this info to use
+	      AWS resources with the user account. 	
+
+	-> Terminate the EC2 instance	
+	-> Delete the user account	
+		
+
+    Access S3 from EC2 by attaching an IAM Role to the EC2 instance
+    ---------------------------------------------------------------
+
+    -> Create an IAM Role
+
+	-> Go to IAM  >> Roles page and click on Create Role button.
+	-> Select EC2 as Use case and click on Next: Permissions button
+	-> Type S3 in Filter Policies textbox.
+	-> Select AmazonS3ReadOnlyAccess and click on Next: Tags
+	-> Add any tags if you want and click on Next: Review
+	-> Give a Role Name and Click on Create Role button. 
+
+   -> Attach the Role to an EC2 instance
+
+	-> Select your EC2 instance
+	-> Click Actions menu option
+	-> Selection Security >> Modify IAM Role option
+	-> Select the role created in the previous step and Save
+
+   -> Connect to EC2 instance and access S3
+
+	-> Connect to EC2 instance using ‘EC2 instance connect’ option
+	-> You can access S3 from here. (type the following command) : aws s3 ls
+
+
+
+    Working wih EC2 IP addresses
+    ----------------------------
+	
+	-> Launch an EC2 instance 
+		-> Select an existing subnet in 'Step 3: Configure Instance Details'
+
+	-> Click on the instance and go to 'Networking' tab
+
+		-> If you attached a public subnet (default) you will have private IP as well as a public IP
+		-> Notedown the private and public IP addresses of your network interface
+
+	-> Stop the EC2 instance ( Instance State -> Stop Instance)
+		-> Wait until the instance state changes to 'Stopped'
+		-> Go to 'Networking' tab again and note that the 'Public IPv4 address' is gone
+			-> Public IP as a dynamic IP and is reallocated every time your instance is stopped and restarted.
+	
+	-> Restart the EC2 instance  ( Instance State -> Start Instance) 
+		-> Wait until the instance state changes to 'Running'
+		-> Go to 'Networking' tab again and note that a new 'Public IPv4 address' is assigned
+			-> This IP is different then the previous one. 
+
+	NOTE: A new public IP address is attached only when you restart the instance, not when you reboot.
+
+	-> Create a new Network Interface
+		-> Click on "Network & Security" -> "Network interfaces" from the left side menu
+		-> Click on "Create network interface" button	
+			-> Give an name
+			-> Make sure you select a subnet in the same AZ as that of your EC2 instance
+
+	-> Attach the network interface to your EC2 instance
+		-> Open the 'network interface' page (Network & Security -> Network interfaces from the left side menu)
+		-> Select the network interface you just created.
+		-> Select "Actions -> Attach" menu option
+		   This will attach the network interface to the EC2 instance.
+		-> Select your EC2 instance.
+		-> Now, Open your EC2 instance and go to "Networking" tab. 
+		   Here you find two network interfaces attached to your EC2 instance. 
+
+	-> Detach the network interface from your EC2 instance
+	 	-> Open the 'network interface' page
+		-> Select the network interface you just created.	
+		-> Select "Actions -> Detach" menu option
+		   This will detach the network interface to the EC2 instance. 
+		-> Refersh the page and you will now see the status as "Available"
+
+	-> Allocate an Elastic IP Address
+		-> Select the 'Elastic IP addresses' option under "Network & Security" from left menu.
+		-> Click in "Elastic IP addresses" button
+		-> Keep defaults and click on "Allocate" button.
+		-> This allocates an Elastic IP
+
+	-> Associate Elastic IP Address to a network interface.
+		-> Select the Elastic IP you created earlier and choose 'Actions' -> 'Associate Elastic IP' option
+		-> Select 'Network interface' as the 'Resource type'
+		-> Select the Network interface you detached earlier.
+		-> Check the 'Reassociation' -> 'Allow this Elastic IP address to be reassociated' option
+		-> Click on 'Associate' button.
+		-> Now, you can see the Public IPv4 address attached to the Network interface
+
+	-> Attach the network interface to the instance once again. 
+		-> Open the 'network interface' page (Network & Security -> Network interfaces from the left side menu)
+		-> Select the network interface you just created.
+		-> Select "Actions -> Attach" menu option
+
+		NOTE: if you do not see the 'attach' option here, try detaching once and then try to attach. 
+
+	-> Stop the EC2 instance		
+		-> Wait until the instance state changes to 'Stopped'
+		-> Now you may have lost the public IP of the first network interface, but still have the Elastic IP
+		   (which is a public IP) associated with the other network interface.
+
+	-> Detach the network interface from your EC2 instance
+
+	-> Disassociate Elastic IP Address from network interface
+
+	-> Terminate the EC2 instance
+
+	-> Create a new EC2 instance in a different AZ
+		-> Launch a new EC2 instance
+		-> In Step3, select a subnet from a different AZ then your previous EC2 instance
+
+	-> Associate the Elastic IP to the new EC2 instance
+		-> You can associate an Elastic IP (EIP) directly to an instances from any AZ.
+		-> An EIP can be associated to an instance or to a network interface. 
+		
+
+  VPC, Public & Private Subnets, Bastion Hosts and NAT Gateway
+  ------------------------------------------------------------
+
+	NOTES:
+	-> Every single region has a default VPC
+	-> The dafault VPC has a (public) subnet in each of the AZs in that region
+	-> Each VPC has a CIDR (Classless inter-domain routing) block of IPs associated with it (ex: 172.31.0.0/16)
+	-> Each subnet within the VPC also has a CIDR block of IPs associated with it
+	-> Each subnet has a route table that defines the rules for routing: 
+
+		Example:
+		
+		Target			Destination
+		172.31.0.0/16	local
+		0.0.0.0/0		igw-01db2f8de16a40712
+
+		=> The above route table allows all inbound-trassfic from the specified CIDR block within local
+		   (that mean within the subnet as private)
+		=> Any traffic from outside of the IP range (defined as 0.0.0.0/0) has public access routed via
+		   the internet gateway (igw-01db2f8de16a40712) 
+		=> As this allows both internal as well as external traffic, this is a public subnet.
+
+
+	Create a Private Subnet
+	-----------------------
+
+	-> Open VPC Service to open VPC Management Console	
+
+	-> Create a private subnet
+		-> Click on 'Subnets' link from the left-menu
+		-> Click on 'Create subnet' button
+		-> Select the default VPC 
+		-> Give a name (ex: private-def-1a)
+		-> Availability Zone : Select an AZ (ex: us-east-1a)
+		-> IPv4 CIDR block: Give a CIDR block (ex: 172.31.96.0/20)
+		-> Click on create subnet
+		(Here, you are creating a subnet in a specifc AZ)
+
+	-> Check the details of the subnet created:
+		-> Observer that for this subnet 'Auto-assign public IPv4 address' is set to 'No'
+		-> This makes it a private subnet (instances do not have public IP here)
+		-> Now, click the 'Route Tables' option from the left menu
+			-> Click on 'Subnet associations' tab
+			-> Observe that the default route table is associated with the subnet we have created.
+
+	-> Create a Route table
+		-> Click the 'Route Tables' option from the left menu
+		-> Click on 'Create route table' button
+			-> Name: private-RT
+			-> Select the VPC
+			-> Click on 'Create route table' button
+		-> Click on 'Subnet associations' tab
+			-> Click on 'Edit subnet associations'
+			-> Select the subnet you have created earlier
+			-> Click on 'Save associations' button 
+			-> Now if you look at 'subnet associations' again you see an entry in 
+			   'Explicit subnet associations' with our private subnet.
+
+
+	
+	Creating an AMI (from existing image)
+	-------------------------------------
+
+	Let us understand how we can create AMI for existing EC2 Instance’s Volume. 
+	In our case, the EC2 instance is ec2demo and we will name the image as ec2demoimage.
+
+	-> Go to EC2 Dashboard and then to Instances.
+
+	-> Select the instance for which you want to create AMI.
+
+	-> Go to Storage and click on the Volume.
+
+	-> Create Snapshot for the Volume selected.
+
+	-> Go to Actions and click on Create Image
+
+	Creating AMI image from CLI
+	----------------------------
+	aws ec2 create-image \
+	  --instance-id <image-id> \
+	  --name webAppAMI \
+	  --description "A sample AMI with pre installed apache web server"
+	  
+	Create a new EC2 instance from our custom AMI
+	---------------------------------------------
+	
+	-> Go to Images and create an instance using it.
+
+	-> We have to go through the standard steps.
+		-> Choosing Instance Type
+		-> Configure Instance Details
+		-> Add Storage
+		-> Add or Choose Security Group
+		-> Launch with a new or existing Key Pair.
+
+	-> Once the instance is launched, we will name it as ec2demo1.
+
+	Wait until the instance is started and then connect via SSH. Once you connect via SSH, make sure to validate that we have Apache 2 as well as AWS CLI already setup and also Apache 2 is started on port 80.
+
+	We can also use command line to create the instance using our AMI
+	------------------------------------------------------------------
+	aws ec2 run-instances \
+	  --image-id ami-ID \
+	  --count 1 \
+	  --instance-type t2.micro \
+	  --key-name keyname \
+	  --security-group-ids sg-ID
+

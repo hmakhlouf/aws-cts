@@ -1,0 +1,122 @@
+
+ ===========================
+   EC2 CLI commands
+ ===========================
+ 
+  aws ec2 help
+  aws ec2 describe-instances help
+  
+	
+  Describe instances and get the instance ids
+  -------------------------------------------
+
+	aws ec2 describe-instances \
+	--profile demouser1 \
+	--region us-east-1
+ 
+	aws ec2 describe-instances \
+	--profile demouser1 \
+	--region us-east-1 | \
+	grep -i instanceid
+ 
+  You can use one of the instance ids and get instance status
+  ------------------------------------------------------------
+	aws ec2 describe-instance-status \
+	--instance-id i-06c095b770f161123 \
+	--profile demouser1 \
+	--region us-east-1
+ 
+  Stop the instance  and validate 
+  -------------------------------
+	
+	aws ec2 stop-instances \
+	--instance-id i-06c095b770f161123 \
+	--profile demouser1 \
+	--region us-east-1
+ 
+	aws ec2 describe-instance-status \
+	--instance-id i-06c095b770f161123 \
+	--profile demouser1 \
+	--region us-east-1
+ 
+  Start the instances and validate 
+  -------------------------------
+	
+	aws ec2 start-instances \
+	--instance-id i-06c095b770f161123 i-01f90164dd2e43b90 \
+	--profile demouser1 \
+	--region us-east-1
+	 
+	aws ec2 describe-instance-status \
+	--instance-id i-06c095b770f161123 i-01f90164dd2e43b90 \
+	--profile demouser1 \
+	--region us-east-1
+ 
+  List Elastic IPs
+  ----------------
+	
+	aws ec2 describe-addresses \
+	--profile demouser1 \
+	--region us-east-1
+	 
+	 
+  Change the instance type (verticle scaling)
+  -------------------------------------------
+
+	aws ec2 stop-instances \
+	--instance-id i-06c095b770f161123 \
+	--profile demouser1 \
+	--region us-east-1
+	 
+	aws ec2 modify-instance-attribute \
+	--instance-id i-06c095b770f161123 \
+	--instance-type t2.micro \
+	--profile demouser1 \
+	--region us-east-1
+	 
+	aws ec2 describe-instances \
+	--instance-id i-06c095b770f161123 \
+	--profile demouser1 \
+	--region us-east-1
+	 
+	aws ec2 start-instances \
+	--instance-id i-06c095b770f161123 \
+	--profile demouser1 \
+	--region us-east-1
+	 
+	 
+  Using 'query' & 'filter' options (on 'describe-instances' command)
+  -------------------------------------------------------------------
+	 
+	aws ec2 describe-instances \
+	--query 'Reservations[*].Instances[*].{Instance:InstanceId,Status:State.Name}' \
+	--output json \
+	--profile demouser1 \
+	--region us-east-1
+	
+	# Get all the ec2 instances which are of type t2.micro
+	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	aws ec2 describe-instances \
+	--filters Name=instance-type,Values=t2.micro \
+	--output json \
+	--profile demouser1 \
+	--region us-east-1
+	
+	# Get only instance id, type and status of t2.micro instances.
+	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+	aws ec2 describe-instances \
+	--filters Name=instance-type,Values=t2.micro \
+	--query 'Reservations[*].Instances[*].{Instance:InstanceId,InstanceType:InstanceType,Status:State.Name}' \
+	--output json \
+	--profile demouser1 \
+	--region us-east-1	
+	
+	# Get only instance id, type and status of t2.micro instances in stopped state.
+	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	aws ec2 describe-instances \
+	--filters Name=instance-type,Values=t2.micro Name=instance-state-name,Values=stopped \
+	--query 'Reservations[*].Instances[*].{Instance:InstanceId,InstanceType:InstanceType,Status:State.Name}' \
+	--output json \
+	--profile demouser1 \
+	--region us-east-1
