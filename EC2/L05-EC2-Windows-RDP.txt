@@ -1,0 +1,65 @@
+  
+  Lab 5: Connecting to a Windows EC2 instance using RDP client
+  ------------------------------------------------------------
+
+	1. Go to EC2 Console page and click on 'instances' menu option. 
+	   Select ‘Launch Instances’ option.
+
+	2. Provide the required details:
+
+	   	2.1 Name: DemoWindows1
+
+		2.2 Application and OS Images (Amazon Machine Image)
+			OS:  Microsoft Windows
+			AMI: 'Microsoft Windows Server 2022 Base' (free tier eligible)
+
+		2.3 Instance type: t2.micro (free tier eligible) 
+
+		2.4 Key pair (login) : Select the key-pair created in Lab-1.
+
+		2.5 Network settings : Review the settings. 
+		   	* You can keep the defaults. This creates a new security group with SSH access.
+			* You can optionally choose an existing security group if you have one. 
+
+		2.6 Configure storage: Keep defaults
+			* Here you are selecting the root EBS volume to be attched to the instance.
+			* You can attach additional non-root EBS volumes if you want
+			* You can also attach NFS or FSx file systems if you have any in your subnet. 
+			* Here you can add options for encryption and delete on termination. 
+
+		2.5 Number of instances: 1 
+
+	3. Review the options and click on 'Lauch instances' button.
+
+	4. Wait until the Windows EC2 instance comes to 'Running'.
+
+	5. Select the Windows EC2 instance, click on 'Connect' button' and open the 'RDP Client' tab.
+
+	6. Click on “Get password” link
+
+	7. Click on 'Upload private key' button. 
+           Browse and select the .pem file (which you created while launching the instance)
+
+	8. Click on “Decrypt password” button.
+
+	9. Store the Public DNS, User name and Password some where. You need these to connect using RDP client.
+
+	10. Now open an RDP client (Remote Desktop Client is pre-installed on Windows)
+
+	11. Connect using the Public DNS
+	    Enter User name and Password and connect.
+
+	NOTE: 
+
+	To connect to EC2 via RDP, the Security Group associated with the EC2 instance should have an inbound rule defined to allow traffic from RDP.
+
+	Type: RDP
+	Protocol: TCP
+	Port range: 3389
+	Source: 0.0.0.0/0
+
+	
+		
+
+
+

@@ -1,0 +1,39 @@
+  
+  Lab 4: Connecting to a Linux EC2 instance using SSH
+  ---------------------------------------------------
+
+	1. Select the EC2 instance and select 'Connect' button. Click on the 'SSH Client' tab
+		* Here you find the command to connect to EC2 using SSH. 
+		* Copy this command. 
+		* Example: ssh -i "ctsdemo-nvirginia-keypair.pem" ec2-user@ec2-3-80-227-2.compute-1.amazonaws.com
+
+	2. Now open a Windows/Linux terminal and cd to the directory where the .pem file (the private key) is saved.
+		* This is the file you downloaded when you created a Key-pair while launching an EC2 instance.
+		* Make sure the .pem file has 600 permissions (i.e rw-------)
+
+	3. Run the command you copied earlier to connect to the instance
+		ssh -i ~/.ssh/mykey.pem ec2-user@ec2-3-80-227-2.compute-1.amazonaws.com
+			
+		* This will launch an SSH terminal connecting to the instance. 
+
+	4. Play around in this instance.
+	
+		hostname -f
+		uname -a
+			
+		** Now install Apache2 webserver
+		
+		sudo apt update
+		sudo apt install -y apache2
+		sudo systemctl status apache2
+		# Hit Ctrl+C to come out of the command output
+ 
+		# Confirm that the apache server is running on port 80 using telnet
+		telnet localhost 80
+		telnet ec2-34-232-68-20.compute-1.amazonaws.com 80
+
+       5. Once you are done, terminate the EC2 instance.
+		
+
+
+

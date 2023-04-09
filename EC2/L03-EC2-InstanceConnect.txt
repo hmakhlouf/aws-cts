@@ -1,0 +1,15 @@
+  
+  Lab 3: Connecting to Linux EC2 using EC2 Instance Connect
+  ---------------------------------------------------------
+
+	1. Go to EC2 Console page and click on 'instances' menu option. 
+	   Select the EC2 instance you want to connect to.
+
+	2. Click on Connect button (towards the top) and select 'EC2 instance connect' tab
+	   In this, all the details such as Instance Id, Public IP address and User name are pre-populated.
+
+	3. Click on Connect button to connect to the EC2 instance over a web browser 
+		
+
+
+

@@ -1,0 +1,36 @@
+ 
+  Lab 1: Create EC2 Key Pair
+  ---------------------------
+
+
+   	1. Login into AWS Web Console.
+	
+	2. Search for EC2 and go to EC2 Console using your IAM user credentials.
+
+	3. On the left sidebar, you have EC2 Key Pair under Security and Networking. 
+	    3.1 Click on 'EC2 Key Pair' menu option
+	    3.2 Provide a suitable name (ex: ctsdemo-nvirginia-keypair)
+	    3.3 Click on “Create Key Pair”.
+
+	4. Make sure to download the .pem file and save it to the standard location. 
+	   You need this later to connect to the EC2 instance.
+
+        5. Copy the .pem file to <HOME>/.ssh directory  
+	   This the directory we conventionally store the SSH key files
+			
+	5. Change the permissions on the .pem file and .ssh folder as follows:
+		 * The permissions on the .pem file should be 600 (rw-------)
+                   chmod 600 ctsdemo-nvirginia-keypair.pem
+		 * The permissions on the .ssh folder itself should be drwx------ (i.e 700)	
+
+
+	Some important notes:
+	---------------------
+	* We use a .pem file for Linux/Mac and .ppk file for windows via puTTY) for the private key.
+	* The .pem file is usually/conventionally stored in .ssh folder in user path (ex: /home/kanak/.ssh/mykey.pem)
+	* The permissions on the .pem file should be 600 (rw-------)
+	* The permissions on the .ssh folder itself should be drwx------ (i.e 700)
+		
+	EC2 Sandard user names:		
+		ec2-user  : for 'Amazon Linux' instances
+		ubuntu	  : for 'Ubuntu' instances
