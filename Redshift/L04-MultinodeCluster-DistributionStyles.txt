@@ -1,0 +1,350 @@
+ =========================================
+  References
+ =========================================
+  https://docs.aws.amazon.com/redshift/latest/dg/c_choosing_dist_sort.html
+  https://docs.aws.amazon.com/redshift/latest/dg/viewing-distribution-styles.html
+  https://docs.aws.amazon.com/redshift/latest/dg/welcome.html
+
+
+
+ =========================================
+  In this lab, we do the following:
+ =========================================
+
+ 1. Create a multi node Redshift cluster 
+ 2. Create a database, user and schema using 'Query editor'
+ 3. Understand search_path, meta-data tables and parameter groups
+ 4. Understanding and working with distribution styles.
+
+
+ ===========================================
+  1: Create a multi node Redshift cluster
+ ===========================================
+ 
+ 1. Sign in and open "Amazon Redshift" management console.
+  
+ 2. Create a cluster
+  
+	2.1 Click on "Create cluster" button and provide the details:
+	
+		Cluster configuration
+			Cluster identifier: demo-cluster-multinode
+			What are you planning to use this cluster for?  Production
+			Choose the size of the cluster: I'll choose
+			Node type: dc2.large   (this is the lowest-cost option)
+			Number of nodes: 2
+
+		Database configurations
+			Admin user name: demoadmin
+			Admin user password: Demoadmin123
+		
+	2.2 Leave all other options as defaults
+
+	2.3 Click on 'Create cluster' button.	
+
+  3. Wait until cluster 'status' becomes 'Available' (it may take several minutes)
+		
+
+ ===========================================
+   2: Create a database, user and schema
+ ===========================================
+
+  1. Open the 'Query Editor'
+	1.1 Open the cluster page 
+	1.2 Click on 'Query data' button and select 'Query in query editor' option.
+
+  2. Connect to the 'dev' database as 'demoadmin' user
+
+	2.1 Click on the 'Connect to database' button
+	2.2 Enter the details and click on connect
+		-> Database name: dev
+		-> Database user: demoadmin  (admin user created in lab-1)
+
+  3. Create a database called 'retail_db':
+
+	CREATE DATABASE IF NOT EXISTS retail_db;
+
+  4. Create a User to connect to Redshift cluster and authorize the user 'retail_user'
+
+	CREATE USER retail_user WITH PASSWORD 'Password123';
+	GRANT ALL ON DATABASE retail_db TO retail_user;
+
+  5. Create Redshift Schema 'retail_schema' under 'retail_db' and authorize 'retail_user' to use it.
+
+	5.1 Connect to the database in which you want to create the schema with admin user
+		
+		5.1.1 Click on 'Change connection' button
+		5.1.2 Enter the details and connect:
+			-> Database name: retail_db
+			-> Database user: demoadmin  (admin user created in lab-1)
+
+	5.2 Run the following statement:
+	
+		CREATE SCHEMA retail_schema AUTHORIZATION retail_user
+
+	Note: 
+	-----
+	Make sure you use a connection with 'admin user' and correct database. 
+
+
+ ======================================================================
+   3: Understand search_path, meta-data tables and parameter groups
+ ======================================================================
+
+  1. Create orders table inside the 'retail_schema' with AUTO distribution style
+
+		CREATE TABLE retail_schema.orders (
+		  order_id INT,
+		  order_date DATE,
+		  order_customer_id INT,
+		  order_status VARCHAR(30)
+		) DISTSTYLE AUTO;
+
+		Note: 'Auto' is default dist-style (and hence it is redundent).
+		Note: To use 'Auto' we must not have any dist-key specified in the schema.
+
+
+  2. Grant SELECT permissions on catalog to database user.
+
+	* By default, the database user will not have permission to query meta-data tables such as 'svv_table_info' table
+	  These meta-data tables are part of 'pg_catalog' schema. 
+
+	2.1 Connect to the 'retail_db' database as 'demoadmin' user using 'Change connection' button
+
+	2.2 Run the following command:
+
+		GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO retail_user
+
+                * After granting permissions you will able to connect as 'retail_user' and query from 'svv_table_info' table.
+	    	* However, this table will have entry for a specific table only if the table is non-empty. 
+
+	
+  3. Check the existing 'search path' to query Redshift system tables. 
+
+	3.1 Check the current search path by using the following command (in Query editor)
+
+		SELECT search_path   (default value: $user, public. These are schemas)
+
+		* You can not update search_path using SQL. You have to set this value in 'parameter group'
+
+
+   4. Create a new parameter group	
+	
+	NOTE: The default param group can not not be updated
+		You have to create a new parameter group (with default values), update it and attach it to cluster.
+
+	4.1 Click on the existing 'parameter group' of your cluster to launch the console page.
+	      Its under Properties -> Parameter group.
+
+	4.2 Click on 'Create' button to create a new parameter group. 
+
+		Parameter group name: demo-cluster-multinode-pg
+
+
+  5. Edit the parameter group and update search_path parameter
+
+	5.1 Wait until the newly create parameter group comes up.	
+	5.2 Select it, go to parameters tabe and click on 'Edit parameters'
+	5.3 Edit the value of 'search_path' to '$user,public,retail_schema' and Save.
+ 
+
+  6. Attach the parameter group to the cluster
+
+	6.1 Open cluster console page
+
+	6.2 Select 'Properties -> Edit -> Edit parameter group' option
+
+	6.3 Select the parameter group from the list and Save changes
+
+	6.4 This reboots the cluster. Wait until cluster status turns to 'Available'
+
+ 
+  7. Check the meta data of the orders table
+
+	7.1 Connect to Query editor as 'retail_user' to 'retail_db'
+
+	7.2 Run the following query:
+
+		SELECT * FROM pg_table_def
+		WHERE schemaname = 'retail_schema'	
+
+  8. Load data into orders table using COPY command.
+
+	8.1 Make sure you attach an IAM role to the cluster that has S3 permissions.	
+	    We use the ARN of this role in the COPY command.
+	
+	8.2 Connect to Query editor as 'retail_user' to 'retail_db'
+
+	8.3 Run the following command.
+
+		COPY retail_schema.orders FROM 's3://ykr-datasets/retail_db/orders/part-00000'
+		IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess'
+		CSV
+
+	8.4 Validate the table by running the following command:
+
+		SELECT * FROM retail_schema.orders LIMIT 10
+
+  9. Validate table with DISTSTYLE AUTO
+
+	9.1 Run the following command.
+	
+		SELECT * FROM svv_table_info;
+
+		* Here the diststyle should show as 'AUTO(ALL)'. (Which, by the way, is the default value)
+		
+		
+ ==========================================================
+   4. Understanding and working with distribution styles.
+ ==========================================================
+
+   Some important points about Redshift data distribution
+
+   * Default DISTSTYLE: AUTO (if distkey is not defined)
+   * Supported values: ALL, EVEN, KEY & AUTO
+   * Need to specify DISTKEY when the DISTSTYLE is KEY
+   * We can specify only one column as DISTKEY per table. 
+   * If the DISTSTYLE is:
+	ALL: Redshift copies the data to all nodes in the cluster.
+   	EVEN : Redshift evenly distributed the data among all nodes in the cluster.  
+   	AUTO : it start with ALL and eventually goes to EVEN.
+   	KEY : data is distributed among the nodes based on the value of the DISTKEY column. 
+
+   Ref:  https://docs.aws.amazon.com/redshift/latest/dg/c_choosing_dist_sort.html
+
+   NOTE: To view the distribution style of a table, query the PG_CLASS_INFO view or the SVV_TABLE_INFO view.
+
+   Guidelines:
+   ----------
+	* For master tables (dimension tables) we may use ALL
+	* If you think the master table can grow (such as customers table), you may consider AUTO
+		-> In this case it will start with AUTO and eventually turns to EVEN as data grows.
+	* The transaction tables (fact tables) that are to be joined for queries, use KEY
+		-> Choose the join column as the DISTKEY if your are using KET dist-style.
+
+
+    4.1 Create 'department' table with ALL DISTSTYLE:
+
+		CREATE TABLE retail_schema.departments (
+		  department_id INT NOT NULL,
+		  department_name VARCHAR(45) NOT NULL,
+		  PRIMARY KEY (department_id)
+		) DISTSTYLE ALL;
+
+   4.2 Load data into the table 
+	
+	* Attach an IAM role with S3 access to the cluster, whose ARN we are using in the COPY command.
+
+		COPY retail_schema.departments FROM 's3://ykr-datasets/retail_db/departments/part-00000'
+		IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess'
+		CSV
+
+   4.3. Validate table with DISTSTYLE by querying from svv_table_info	
+	
+		SELECT * FROM svv_table_info;
+
+		* Here the diststyle should show as 'ALL' for departments table.
+
+   4.4 In the similar lines we can do the following:
+
+	 -> Create 'categories' table with ALL; Load data and validate using svv_table_info
+	 -> Create 'products' table with ALL; Load data and validate using svv_table_info
+	 -> Create 'customers' table with AUTO; Load data and validate using svv_table_info
+	 -> Create 'orders' table with KEY with order_id as DISTKEY; Load data and validate using svv_table_info
+
+
+		CREATE TABLE retail_schema.categories (
+		  category_id INT NOT NULL,
+		  category_department_id INT NOT NULL,
+		  category_name VARCHAR(45) NOT NULL,
+		  PRIMARY KEY (category_id)
+		) DISTSTYLE ALL; 
+
+		COPY retail_schema.categories FROM 's3://ykr-datasets/retail_db/categories/part-00000'
+		IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess'
+		CSV
+
+		------------------------
+
+		CREATE TABLE retail_schema.products (
+		  product_id INT NOT NULL,
+		  product_category_id INT NOT NULL,
+		  product_name VARCHAR(80) NOT NULL,
+		  product_description VARCHAR(255) NOT NULL,
+		  product_price FLOAT NOT NULL,
+		  product_image VARCHAR(255) NOT NULL,
+		  PRIMARY KEY (product_id)
+		) DISTSTYLE ALL; 
+
+		COPY retail_schema.products FROM 's3://ykr-datasets/retail_db/products/part-00000'
+		IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess'
+		CSV
+
+		------------------------
+
+		CREATE TABLE retail_schema.customers (
+		  customer_id INT NOT NULL,
+		  customer_fname VARCHAR(45) NOT NULL,
+		  customer_lname VARCHAR(45) NOT NULL,
+		  customer_email VARCHAR(45) NOT NULL,
+		  customer_password VARCHAR(45) NOT NULL,
+		  customer_street VARCHAR(255) NOT NULL,
+		  customer_city VARCHAR(45) NOT NULL,
+		  customer_state VARCHAR(45) NOT NULL,
+		  customer_zipcode VARCHAR(45) NOT NULL,
+		  PRIMARY KEY (customer_id)
+		) DISTSTYLE AUTO;  
+
+		SELECT * FROM svv_table_info where "table" = 'customers' 
+		(Note "table" is in quotes as it's a keyword)
+		   => The DISTSTYLE may show as "AUTO(ALL)"
+
+		COPY retail_schema.customers FROM 's3://ykr-datasets/retail_db/customers/part-00000'
+		IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess'
+		CSV
+
+		SELECT * FROM svv_table_info where "table" = 'customers' 
+		   => After loading data, the DISTSTYLE may show as "AUTO(EVEN)"
+
+		------------------------
+
+                DROP TABLE orders; 
+		
+		CREATE TABLE retail_schema.orders (
+		  order_id INT NOT NULL DISTKEY,
+		  order_date TIMESTAMP NOT NULL,
+		  order_customer_id INT NOT NULL,
+		  order_status VARCHAR(45) NOT NULL,
+		  PRIMARY KEY (order_id)
+		) DISTSTYLE KEY;
+
+		COPY retail_schema.orders FROM 's3://ykr-datasets/retail_db/orders/part-00000'
+		IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess'
+		CSV
+
+                ----------------------------
+
+ 		CREATE TABLE retail_schema.order_items (
+		  order_item_id INT NOT NULL,
+		  order_item_order_id INT NOT NULL DISTKEY,
+		  order_item_product_id INT NOT NULL,
+		  order_item_quantity INT NOT NULL,
+		  order_item_subtotal FLOAT NOT NULL,
+		  order_item_product_price FLOAT NOT NULL,
+		  PRIMARY KEY (order_item_id)
+		) DISTSTYLE KEY;
+
+		COPY retail_schema.order_items FROM 's3://ykr-datasets/retail_db/order_items/part-00000'
+		IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess'
+		CSV
+
+	
+   4.5 Validate distkeys using the following query
+
+		SELECT * FROM pg_table_info
+		WHERE "table" = 'orders'
+
+		=> Here observer that for 'order_id' entry, the distkey column's value is true.	
+
+
+

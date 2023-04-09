@@ -1,0 +1,136 @@
+  
+   Lab 2: Demonostrate how to use  COPY command
+   --------------------------------------------
+
+    NOTE: This is continuation of Lab-1
+	-> Make sure you are connected to the Redshift cluster
+	-> Open the 'Query editor v2'
+
+
+   1. Connect to 'Query editor v2' as 'demoadmin' (admin user) to 'demodb' database
+
+   2. Create a new database called 'retail_db'.  
+      Create a new schema called 'retail_schema' under 'retail_db' database.
+
+   3. Create a table into which we want to load the data. 
+
+		DROP TABLE IF EXISTS retail_schema.orders;
+
+		CREATE TABLE retail_schema.orders (
+		  order_id INT,
+		  order_date DATETIME,
+		  customer_id INT,
+		  status VARCHAR(30) 
+		);
+
+  
+ ============================================================================
+    Use COPY command to copy CSV data from S3 buckets to a Redshift table
+    using key-based authentication.
+ ============================================================================
+
+   4. Create an IAM user with full access on S3 to run Redshift Copy command.
+
+	4.1 Create a user with the following details	
+
+		* User Name: demo-redshift-user
+		* No need to give Console access)
+		* Permissions options: Attach existing policies directly
+		* Policy: AmazonS3FullAccess 
+
+	4.2 Make a note of the 'Access key ID' and 'Secret access key'. We need them later.
+	
+		* Go to 'Security Credentials'tab and click on 'Create access key' button
+		* Access key best practices & alternatives: Command Line Interface (CLI)
+
+                  Note down the following details:		
+
+			Access key ID: 	   <your access key id>   	AKIASJLVRN55UKZ6SY4O
+			Secret access key: <your secret access key>	YK/zxLHQAkTlhbUY9GX4rkjmrw6Vh0T5LowzpjNv
+
+
+   5. Copy the data files to be copied to a S3 bucket.
+
+		aws s3 mb s3://ykr-datasets --region us-east-1
+		aws s3 cp datasets/retail_csv/ s3://ykr-datasets/retail_db --recursive
+		aws s3 ls s3://ykr-datasets/retail_db/ --recursive
+
+
+   6. Run the "COPY" command with key-based authentication in the query editor. 
+
+		COPY retail_schema.orders FROM 's3://ykr-datasets/retail_db/orders/part-00000' 
+		CREDENTIALS 'aws_access_key_id=<access key id>;aws_secret_access_key= <secret access key>'
+		CSV;
+
+		Note: Use valid user credentials (keys) in the above query.
+
+
+   7. Validate the data by running the following commands:
+
+		SELECT count(*) FROM retail_schema.orders;
+		SELECT * FROM retail_schema.orders LIMIT 5;
+
+
+   8. Trouble Shooting: In case your command fails for any reason, you can troubleshoot by querying
+      'stl_load_errors' table and look for 'err_reason' column.
+
+		SELECT * FROM stl_load_errors;
+
+
+============================================================================
+    Use COPY command to copy JSON data from S3 buckets to a Redshift table
+    using role-based authentication. 
+ ============================================================================
+
+   9. Create an IAM Role for 'Redshift - Customizable' use case and attach AmazonS3FullAccess policy to it
+	
+	Role Name: DemoRedshiftS3FullAccess
+	Policy: AmazonS3FullAccess
+
+
+   10. Make a note of the ARN of the role created. 
+
+	2.1 Open the Role summary page and make a note of the ARN of the role.
+	2.2 use this ARN in the COPY command in a sebsequent step. 
+
+	arn:aws:iam::157549686651:role/DemoRedshiftS3FullAccess
+
+
+   11. Attach the IAM Role to the cluster.
+
+	11.1 Open the Cluster details page of your cluster.
+	11.2 Click on Actions dropdown and select 'Permissions -> Manage IAM Role' option.
+	11.3 Now, select the IAM role you created and click on 'Asscoiate IAM Role' button.
+	11.4 Click on 'Save changes' button.
+	11.5 Wait until the cluster status becomes 'Available' (may take several minutes).
+
+
+  12. Create a Redshift table to copy the data from s3
+
+		DROP TABLE IF EXISTS retail_schema.order_items;
+
+		CREATE TABLE retail_schema.order_items (
+		  order_item_id INT PRIMARY KEY,
+		  order_item_order_id INT,
+		  order_item_product_id INT,
+		  order_item_quantity INT,
+		  order_item_subtotal FLOAT,
+		  order_item_product_price FLOAT
+		);
+
+  13. Run the COPY command to copy JSON files from S3 to Redshift table.
+
+	COPY retail_schema.order_items FROM 's3://ykr-datasets/retail_json/order_items/'
+	IAM_ROLE '<ARN of the role>'
+	JSON AS 'auto'
+
+	Note: Use appropriate ARN of the IAM role. 
+
+
+  14. Validate the tables by running the following queries.
+
+	SELECT count(*) FROM retail_schema.order_items;
+	SELECT * FROM retail_schema.order_items LIMIT 10;
+
+
+   

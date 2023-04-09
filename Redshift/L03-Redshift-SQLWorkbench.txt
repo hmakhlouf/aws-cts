@@ -1,0 +1,63 @@
+
+   Lab 2: Connecting to redshift cluster from SQLWorkbench/J
+   ----------------------------------------------------------
+ 		   
+    	1. Launch a Redshift custer (refer to Lab 1 for details)
+		 => Make a note of the following: Username, Password & JDBC URL			
+	
+	2. Enable public access on the Reshift cluster
+	
+		2.1 Select the cluster and choose "Modify publicly accessible setting" from "Actions" options menu. 
+			
+		2.2 Select 'enable' and click on 'Save changes' button
+		
+		2.3 Wait until the cluster comes back to 'Available' state.		
+		    NOTE: It may take long time to apply this change. (It took me more than 30 min.)		
+
+	3. Download Redshift JDBC Driver (to a suitable folder on your local machine)
+
+		URL: https://docs.aws.amazon.com/redshift/latest/mgmt/jdbc20-download-driver.html
+		Driver Jar File: D:\AWSSoftware\redshift-jdbc42-2.1.0.1\redshift-jdbc42-2.1.0.1.jar 
+		
+		You can also download JDBC Driver from Cluster home page on Redshift AWS console.
+		
+	4. Download and install SQLWorkBench/J
+	
+		URL: https://www.sql-workbench.eu/downloads.html
+		   -> Generic package for all systems including all optional libraries (sha1)
+
+		Unzip the downloaded folder and click on the application exe file
+		   -> D:\Workbench-Build127-with-optional-libs\SQLWorkbench64 
+ 
+    	5. Open SQLWorkbench and setup to connect to redshift.
+	
+		5.1 Add the JDBC Driver to the SQLWorkbench/J
+			-> Click on "Manage Drivers" button (towards bottom-left)
+			-> Click on "Create a new entry" button (towards top-left)
+			-> Give a name to your driver (ex: Amazon Redshift JDBC Driver)
+			-> Browse and select the JDBC driver you have downloaded earlier. 
+			  (in my case this is D:\AWSSoftware\redshift-jdbc42-2.1.0.1\redshift-jdbc42-2.1.0.1.jar
+			-> Class Name: com.amazon.redshift.jdbc42.Driver
+			-> Click OK.
+			
+		5.2 Create a new connection profile.
+			-> Click on 'New connection profile' button (towards top-left)
+			-> Fill the details:
+				Give a suitable name to your profile (ex: Redshift-<ClusterName>)
+				Driver: Choose the driver you created earlier
+				URL: put your jdbc url link (you get this from redshift cluster details page)
+				Username: Username that you used to create the cluster
+				Password: Password that you used to create the cluster
+				Autocommit: check this
+			-> Test the connection	
+				-> Click on "Test" button to test the connect.
+			-> Click OK to launch the query window
+
+		5.3 Execute queries from the query window.
+		
+		
+	Troubleshooting:
+	
+		=> Check the following if the connection is not sucessful. 		  
+		   -> Make sure your cluster is publicly accessible. (step 2 above)
+		   -> Make sure your cluster security group allows incoming traffic from your IP. 

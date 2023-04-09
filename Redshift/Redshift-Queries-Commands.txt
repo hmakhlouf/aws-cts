@@ -1,0 +1,278 @@
+Get list of tables querying information schema
+----------------------------------------------
+SELECT * FROM information_schema.tables
+WHERE table_schema = 'public'
+
+
+Create Redshift Database
+----------------------------------------------
+CREATE DATABASE IF NOT EXISTS retail_db;
+
+
+Create a User to connect to Redshift cluster
+-------------------------------------------------
+CREATE USER <user-name> WITH PASSWORD <password>
+Ex:
+CREATE USER rsuser WITH PASSWORD 'Password123'
+
+# Grant permissions to the user
+GRANT ALL ON DATABASE <db-name> TO <user-name>
+Ex:
+GRANT ALL ON DATABASE retail_db TO rsuser
+
+# alter a table ownership to a specified user
+ALTER TABLE orders OWNER TO rsuser
+
+
+Create Redshift Schema
+----------------------------------------------
+Note: In Redshift, a database may contain several subject-areas.
+      Each subject-area may contain a schema (which corresponds to a group of related tables)
+      Tables are created with a schema.
+      By default, we get a schema called 'public'
+	  
+Note: To create a schema, make sure you use a connection with 'admin user' (i.e the user you created while creating the cluster) and correct database in which you want to create the schema. 
+
+
+ CREATE SCHEMA retail_ods AUTHORIZATION retail_user	  
+ 
+
+Create Redshift Table
+----------------------------------------------
+CREATE TABLE myusers (
+  user_id INT PRIMARY KEY,
+  user_first_name VARCHAR(30),
+  user_last_name VARCHAR(30)
+);
+
+
+# creating a table in a specific schema (retail_ods here)
+# with auto distribution style.
+
+CREATE TABLE retail_ods.orders (
+  order_id INT,
+  order_date DATETIME,
+  order_customer_id INT,
+  order_status VARCHAR(30)
+) DISTSTYLE AUTO;
+
+NOTE: while using DISTSTYLE AUTO, you should not have any distribution keys defined.
+
+
+CRUD Operations - Insert records
+----------------------------------------------
+
+INSERT INTO myusers(user_id, user_first_name,  user_last_name)
+VALUES( 1, 'Joey', 'Tribiany')
+
+-- works fine if you gives columns in order.
+INSERT INTO myusers VALUES( 2, 'Ross', 'Gellar')   
+
+-- multi-row insert
+INSERT INTO myusers VALUES ( 1, 'Joey', 'Tribiany'), ( 2, 'Ross', 'Gellar')
+
+NOTE: Redshift does not enforce unique-key or primary-key constraints
+      You can insert duplicate values for the column specified as primary-key
+      Specifying Primary key allows Redshift to optimize query execution. 
+      However, Redshift does enforce NOT NULL constraint.
+
+--this won't work. not null violated.
+INSERT INTO myusers(user_first_name,  user_last_name) VALUES('Joey', 'Tribiany')
+      
+
+
+CRUD Operations - Update records
+----------------------------------------------
+ 
+SELECT * FROM myusers
+ 
+UPDATE myusers
+SET user_first_name = 'Mickey', user_last_name = 'Mouse'
+WHERE user_id = 2
+ 
+SELECT * FROM myusers
+ 
+SELECT lower('Mouse')
+ 
+SELECT * FROM myusers
+ 
+UPDATE myusers
+SET user_first_name = lower(user_first_name), user_last_name = lower(user_last_name)
+ 
+SELECT * FROM myusers
+ 
+ 
+CRUD Operations - Delete records from Retail table
+--------------------------------------------------
+ 
+SELECT * FROM myusers
+ 
+DELETE FROM myusers
+WHERE user_id = 1
+ 
+SELECT * FROM myusers
+ 
+DELETE FROM myusers
+ 
+TRUNCATE TABLE myusers
+ 
+SELECT * FROM myusers
+
+
+====================================================
+ Copy Command
+====================================================
+CREATE TABLE part
+(
+  p_partkey     INTEGER NOT NULL,
+  p_name        VARCHAR(22) NOT NULL,
+  p_mfgr        VARCHAR(6) NOT NULL,
+  p_category    VARCHAR(7) NOT NULL,
+  p_brand1      VARCHAR(9) NOT NULL,
+  p_color       VARCHAR(11) NOT NULL,
+  p_type        VARCHAR(25) NOT NULL,
+  p_size        INTEGER NOT NULL,
+  p_container   VARCHAR(10) NOT NULL
+);
+
+
+NOTE: Before using copy command with role-based authentication, make sure
+      you have attached the role to the cluster. 
+
+copy part from 's3://awssampledbuswest2/ssbgz/part'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+------------------------------------------------------------------
+alternate syntax for copy command using role-based authentication
+------------------------------------------------------------------
+copy part from 's3://awssampledbuswest2/ssbgz/part'
+IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+------------------------------------------------------------------
+alternate syntax to copy from files with a delimiter (default is '|')
+------------------------------------------------------------------
+copy part from 's3://awssampledbuswest2/ssbgz/part'
+IAM_ROLE 'arn:aws:iam::157549686651:role/DemoRoleRedshift'
+DELIMITER ','
+
+------------------------------------------------------------------
+alternate syntax for copy command using key-based authentication
+------------------------------------------------------------------
+copy part from 's3://awssampledbuswest2/ssbgz/part'
+credentials 'aws_access_key_id=xxxxxx,aws_secret_access_key=xxxxxx'
+gzip compupdate off 
+region 'us-west-2';
+
+NOTE: The approach of key-based authentication (as shown above) should be used 
+      when you are accessing Redshift from external locations outside of AWS. 
+	  In such case, you can not use role-based authentication. 
+	  
+	  When you are using AWS services it is recommended to use role-based authentication only. 
+
+select count(*) from part;
+
+========================================
+  
+CREATE TABLE supplier
+(
+  s_suppkey   INTEGER NOT NULL,
+  s_name      VARCHAR(25) NOT NULL,
+  s_address   VARCHAR(25) NOT NULL,
+  s_city      VARCHAR(10) NOT NULL,
+  s_nation    VARCHAR(15) NOT NULL,
+  s_region    VARCHAR(12) NOT NULL,
+  s_phone     VARCHAR(15) NOT NULL
+);
+
+
+copy supplier from 's3://awssampledbuswest2/ssbgz/supplier'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+
+CREATE TABLE customer
+(
+  c_custkey      INTEGER NOT NULL,
+  c_name         VARCHAR(25) NOT NULL,
+  c_address      VARCHAR(25) NOT NULL,
+  c_city         VARCHAR(10) NOT NULL,
+  c_nation       VARCHAR(15) NOT NULL,
+  c_region       VARCHAR(12) NOT NULL,
+  c_phone        VARCHAR(15) NOT NULL,
+  c_mktsegment   VARCHAR(10) NOT NULL
+);
+
+
+copy customer from 's3://awssampledbuswest2/ssbgz/customer'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+
+CREATE TABLE dwdate
+(
+  d_datekey            INTEGER NOT NULL,
+  d_date               VARCHAR(19) NOT NULL,
+  d_dayofweek          VARCHAR(10) NOT NULL,
+  d_month              VARCHAR(10) NOT NULL,
+  d_year               INTEGER NOT NULL,
+  d_yearmonthnum       INTEGER NOT NULL,
+  d_yearmonth          VARCHAR(8) NOT NULL,
+  d_daynuminweek       INTEGER NOT NULL,
+  d_daynuminmonth      INTEGER NOT NULL,
+  d_daynuminyear       INTEGER NOT NULL,
+  d_monthnuminyear     INTEGER NOT NULL,
+  d_weeknuminyear      INTEGER NOT NULL,
+  d_sellingseason      VARCHAR(13) NOT NULL,
+  d_lastdayinweekfl    VARCHAR(1) NOT NULL,
+  d_lastdayinmonthfl   VARCHAR(1) NOT NULL,
+  d_holidayfl          VARCHAR(1) NOT NULL,
+  d_weekdayfl          VARCHAR(1) NOT NULL
+);
+
+copy dwdate from 's3://awssampledbuswest2/ssbgz/dwdate'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+
+CREATE TABLE lineorder
+(
+  lo_orderkey          INTEGER NOT NULL,
+  lo_linenumber        INTEGER NOT NULL,
+  lo_custkey           INTEGER NOT NULL,
+  lo_partkey           INTEGER NOT NULL,
+  lo_suppkey           INTEGER NOT NULL,
+  lo_orderdate         INTEGER NOT NULL,
+  lo_orderpriority     VARCHAR(15) NOT NULL,
+  lo_shippriority      VARCHAR(1) NOT NULL,
+  lo_quantity          INTEGER NOT NULL,
+  lo_extendedprice     INTEGER NOT NULL,
+  lo_ordertotalprice   INTEGER NOT NULL,
+  lo_discount          INTEGER NOT NULL,
+  lo_revenue           INTEGER NOT NULL,
+  lo_supplycost        INTEGER NOT NULL,
+  lo_tax               INTEGER NOT NULL,
+  lo_commitdate        INTEGER NOT NULL,
+  lo_shipmode          VARCHAR(10) NOT NULL
+);
+
+copy lineorder from 's3://awssampledbuswest2/ssbgz/lineorder'
+credentials 'aws_iam_role=arn:aws:iam::157549686651:role/DemoRoleRedshift'
+gzip compupdate off 
+region 'us-west-2';
+
+select count(*) from LINEORDER;
+
+select count(*) from PART;
+
+select count(*) from  CUSTOMER;
+
+select count(*) from  SUPPLIER;
+
+select count(*) from  DWDATE;

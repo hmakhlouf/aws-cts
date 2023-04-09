@@ -1,0 +1,203 @@
+
+***  Redshift Port: 5439 ***
+
+
+  Lab 1: Create a Redshift cluster and perform basic operations
+  -------------------------------------------------------------
+ 
+ 	1. Sign in and open "Amazon Redshift" management console.
+  
+ 	2. Create a cluster
+  
+		2.1 Click on "Create cluster" button and provide the details:
+	
+			Cluster configuration
+				Cluster identifier: cts-demo-cluster
+				Choose the size of the cluster: I'll choose
+					Node type: dc2.large
+					Number of nodes: 1
+					NOTE: Use free-trial eligible options you available (to save cost)
+		    	
+		     	Sample data
+				Load sample data : check (yes)			
+
+		     	Database configurations
+			  	Admin user name: demoadmin
+			  	Admin user password: Demoadmin123
+
+		    	Cluster permissions
+			  	Associated IAM roles: Here you can create a new Role or associate an 
+				existing role which has access to Redshift and S3.
+
+				* Click on 'Associate IAM Role' and select 'RedshiftFullAccessRole'
+		
+		2.2 Click on 'Create cluster' button.	
+			* Wait until status becomes 'Available'. This may take several minutes.
+
+
+	3. Run queries on sample data using the query editor
+
+		3.1  Select the cluster from the list of clusters.
+
+		3.2  Choose "Query in query editor v2" option from "Query data" dropdown button.
+		     This opens the Query editor in a new browser tab.
+
+		     Note: By default, Amazon Redshift creates a default database named dev and a default schema named public. 
+			   To view the individual data files of the sample dataset, choose a cluster, 
+			   go to the query editor v2, and choose the dev database, public schema, then Tables
+
+		3.3  Expand the cluster (on the left menu) and check the sample data (database and tables)
+		     * cts-demo-cluster -> dev -> public -> Tables
+
+		3.4  Run the sample queries. 
+		     Copy and paste the queries in the editor window and click on "Run" button.
+		     ** You can find the sample queries given below **
+
+		3.5  Export the results to CSV/JSON files.
+
+	4. Create a new database, schema and load your own data
+		
+		3.1 Open "Create" options menu (top-left) and choose "Database" option in the Query editor.
+ 
+		3.2 Provide the details:
+			Cluster or workgroup: <select the cluster>
+			Database: <provide a name. ex: demodb)
+			Users and groups: <select a DB user>
+		
+		3.3 Click on "Create database" button.
+
+	5. Create a schema in the local database.
+ 
+		NOTE: By default, Redshift creates a schema called "public" in your database.
+ 
+		5.1 Open "Create" options menu (top-left) and choose "Schema" option
+	
+		5.2 Provide the details:
+			Cluster or workgroup: <select the cluster>
+			Database: <select the database ex: demodb)
+			Schema: <provide a name. ex: flights)
+			Schema type: local
+	
+		5.3 Click on "Create schema" button
+
+	6. Create a table and load data into it.
+ 
+    		6.1 Open "Create" options menu (top-left) and choose "Table" option
+		6.2 Provide the details:
+			Cluster or workgroup: <select the cluster>
+			Database: <select the database ex: demodb)
+			Schema: <select the schema. ex: flights)
+			Table: <provide a table name. ex: flights2015>	
+
+			Option 1: 
+				Click on "Load from CSV" option	
+			   	Browse and select "2015-summary.csv" file from the sample data provided to you.		
+				Click on "Create table"
+			   	At this point the table will be created, but without any data.
+
+			Option 2:
+				Manually define the columns and create the table.
+			
+		6.3 Check the table	
+			Open a "Query editor" tab and run the following query:
+				-> select * from flights.flights2015    (<schema>.<table-name>)
+				This should fetch the columns but with no data.
+		
+		6.4 Load the data into the table from S3 bucket
+		
+			6.4.1  Make sure the IAM Role has "AmazonS3ReadOnlyAccess" policy attached. If not, attach it.
+
+				Select and the Cluster details page from Redshift console.
+				Open the "Properties" tab
+				Under "Associated IAM roles" section you find the IAM role. Click to open the role.
+				Under "Permissions policies" check for "AmazonS3ReadOnlyAccess". This is not added by default.
+				From "Add permissions" options box, Select "Attach Policies"
+				Search and attach "AmazonS3ReadOnlyAccess" to the IAM policy. 
+			
+			6.4.2 Go to Query editor window and click on "Load data" button and provide the details.
+				S3 URI: browse and select the S3 button whose data is compatible with table schema. 
+				File format: <select the format as per your bucket data>
+				Target table: Choose the correct database, schema and table name.
+				IAM role: Choose the IAM role (with necessary permissions)
+				Click on "Load data" button
+			
+			6.4.3 Execute the command from Query editor	
+				The previous step will paste the Copy command on the editor.
+				** Make sure the cluster and database (top menu options) match your command. **
+				Run the command to load the data.
+
+Example:
+		
+COPY demodb.flights.flights2015 FROM 's3://iquiz.datasets/flight-data/csv/2015-summary-nh.csv' IAM_ROLE 'arn:aws:iam::157549686651:role/service-role/AmazonRedshift-CommandsAccessRole-20211204T212847' FORMAT AS CSV DELIMITER ',' QUOTE '"' REGION AS 'us-east-2'
+
+			
+		6.5 You can also manually create and load the data from query editor by running Redshift SQL commands such as these:	
+     
+			create table category(
+				catid smallint not null distkey sortkey,
+				catgroup varchar(10),
+				catname varchar(10),
+				catdesc varchar(50));
+			
+			copy category from 's3://<myBucket>/tickit/category_pipe.txt' 
+				iam_role default
+				delimiter '|' region '<aws-region>';
+
+	7. Clean up the resources and delete the cluster.
+				
+		* Drop all your tables
+			drop table flights.flights2015
+			drop table flights.category
+		* Drop your database
+			Close all existing tabs
+			Change the connect to 'dev' database and run the statement to delete the database
+			drop database demodb;
+		* Pause the cluster
+		* Delete the cluster
+
+
+
+==============================================
+  Step 3.4 : Sample queries to be executed
+==============================================
+-- Find total sales on a given calendar date.
+SELECT sum(qtysold) 
+FROM   sales, date 
+WHERE  sales.dateid = date.dateid 
+AND    caldate = '2008-01-05';
+
+-- Find top 10 buyers by quantity.
+SELECT firstname, lastname, total_quantity 
+FROM   (SELECT buyerid, sum(qtysold) total_quantity
+        FROM  sales
+        GROUP BY buyerid
+        ORDER BY total_quantity desc limit 10) Q, users
+WHERE Q.buyerid = userid
+ORDER BY Q.total_quantity desc;
+
+-- Find events in the 99.9 percentile in terms of all time gross sales.
+SELECT eventname, total_price 
+FROM  (SELECT eventid, total_price, ntile(1000) over(order by total_price desc) as percentile 
+       FROM (SELECT eventid, sum(pricepaid) total_price
+             FROM   sales
+             GROUP BY eventid)) Q, event E
+       WHERE Q.eventid = E.eventid
+       AND percentile = 1
+ORDER BY total_price desc;
+
+
+JDBC Connector
+--------------
+    
+   jdbc:redshift://demo-cluster-1.cng38jvgw19b.us-east-1.redshift.amazonaws.com:5439/dev
+
+
+
+
+
+
+
+
+
+
+
