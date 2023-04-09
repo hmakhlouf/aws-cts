@@ -1,0 +1,68 @@
+
+  -------------------------------------------------------------------
+    Connecting to an EC2 instance from your local machine using SSH
+  -------------------------------------------------------------------
+
+  1. Open your EC2 instance details and make a note of 'Public IPv4 DNS'
+
+	In my case it is: ec2-44-204-91-166.compute-1.amazonaws.com
+
+
+  2. Make sure SSH port (port 22) is opened in the EC2 instance to connect from your local machine
+
+	2.1 Open a terminal on your local linux machine and run the following commands:
+
+		telnet ec2-44-204-91-166.compute-1.amazonaws.com 22
+		(This won't work if port 22 is not open in the EC2 security group)
+
+	2.2 Open port 22 for incoming traffic on the EC2 instance (Type:SSH, Protocol:TCP Port:22)
+            and allow Anywhere IPv4 (or only your IP if you want to be secure)
+
+	2.3 Make sure you can connect to SSH from your local terminal again
+
+		telnet ec2-44-204-91-166.compute-1.amazonaws.com 22
+		(should work now)
+
+
+  3. Generate SSH keys (public & private) in your local terminal
+
+	3.1 Open your local terminal and run the following commands:
+
+		cd ~
+		ssh-keygen
+		        Enter the file name to save the keys such as below: 
+            		./.ssh/cloud9user
+
+			Two key files are created in <home>/.ssh folder.
+			If the file-name you entered is "cloud9user" the file names will be:
+				cloud9user 	(this is private key)
+				cloud9user.pub  (this is private key)
+
+	3.2 Open the public key file and copy the contents to the clipboard.
+
+		cat ~/.ssh/cloud9user.pub
+		-> Copy the contents. Make sure you do not copy ant extra charectors like newline or space.
+
+	3.3 Open a terminal inside your EC2 instance (you can use Cloud9 instance or Connect using 
+           'EC2 Instance Connect' option to open an EC2 terminal. Make sure you connect as 'ec2-user')
+
+	3.4 Do the following:
+
+		cd /home/ec2-user
+		vi .ssh/authorized_keys   (this file holds all authorised public keys that are allowed to connect)
+
+		Add the copied private-key content (3.2 step above) at the end of this file.
+                Save and exit.
+
+        3.5 Now, open your local terminal and connect using the following command:
+
+		ssh -i ./.ssh/cloud9user ec2-user@ec2-44-204-91-166.compute-1.amazonaws.com
+
+		Format:
+		ssh -i <private-key-file-path> <user-name>@<Public IPv4 DNS of the EC2 instance>
+
+        3.6 This should connect to the EC2 instance from your local machine.
+
+
+
+	

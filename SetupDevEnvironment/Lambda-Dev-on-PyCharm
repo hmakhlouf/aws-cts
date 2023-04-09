@@ -1,0 +1,157 @@
+
+-------------------------------------------------------
+Developing Lambda Applications locally using PyCharm
+-------------------------------------------------------
+
+===================================================================
+DEMO: Download github archive files to S3 using Lambda
+
+Github Archive URL: http://www.gharchive.org/
+Data File sample: https://data.gharchive.org/2015-01-01-15.json.gz
+===================================================================
+
+1. Create a project directory and cd to it
+
+	mkdir github-activity-downloader
+	cd github-activity-downloader
+
+
+2. Create a Python virtual environment and activate it
+
+	python3 -m venv ghad-venv
+	source ./ghad-venv/bin/activate
+
+
+3. Install required libraries in the venv as needed
+
+	pip3 install requests
+	pip3 install boto3
+
+	-----------------------------------------------------------------
+	Note: 
+        While boto3 is needed for local development, it is not required while deploying to AWS
+        AWS python comes with boto3 pre-installed
+
+	*** Hence you need a separate folder for deployment purpose alone where you 
+            install only required packages for deployment. ***
+	-----------------------------------------------------------------
+
+	mkdir ghad-libs
+	pip3 install requests -t ghad-libs
+
+
+4. Launch PyCharm and Open the project
+
+	-> navigate to github-activity-downloader folder and open it
+	-> This should have two directories: ghad-venv and ghad-libs
+
+5. Make sure your python interpretor pointing to the correct location
+
+	File -> Settings -> Project: <your project-name>
+	'Python Interpretor' should have the '<your-venv>/bin/python' selected
+	example: /home/kanak/awsprojects/github-activity-downloader/ghad-venv/bin/python
+
+6. Create two python files by right clicking on the project and selecting New -> Python file
+	
+	lambda_function.py
+	lambda_test.py
+
+	----------------------------
+	  lambda_function.py
+	----------------------------
+	import json
+
+	def lambda_handler(event, context):
+    		return {
+        		'statusCode': 200,
+        		'body': json.dumps('From github activity downloader')
+    		}
+
+	----------------------------
+	  lambda_test.py
+	----------------------------
+	from lambda_function import lambda_handler
+	res = lambda_handler(None, None)
+	print(res)
+
+
+7. Validate the function by running lambda_test.py
+
+	-> Right click -> Run 'lambda_test' 
+
+8. Create zip file of the project to upload it to Lambda web console
+
+	-> Open PyCharm Terminal (Click 'Terminal' tab at the bottom of the IDE)
+	-> Make sure the correct project directory is selected
+	-> Run the following commands as required:
+
+		zip -r ghad.zip lambda_function.py     	[creating a new zip file called 'ghad.zip']
+
+
+		Note: if you need to update existsing zip, use the following:
+			zip -g ghad.zip lambda_function.py	[updating an existing zip file called 'ghad.zip']
+
+		Note: Here you are creating a zip with only one python file.
+
+9. Upload it to AWS Lambda web console
+	
+	-> Login to AWS and Open Lambda Web Console
+	-> Create a lambda function (eg: github-downloader)
+	-> Select 'Upload from' option and upload the zip file created in the above step
+	-> Test the Lambda.
+
+10. Add third-party libraries to your lambda functions
+
+	-> Create an additional python program called 'download.py' and update existing files
+
+
+	----------------------------
+	  download.py
+	----------------------------
+	import requests
+
+	def download_file(file):
+    		res = requests.get(f"https://data.gharchive.org/{file}")
+    		return res
+
+	----------------------------
+	  lambda_function.py
+	----------------------------
+	import json
+	from download import download_file
+
+	def lambda_handler(event, context):
+    		res = download_file("2022-01-01-0.json.gz")
+    		return {
+        		'statusCode': res.status_code,
+        		'body': json.dumps('status code')
+    		}
+
+	----------------------------
+	  lambda_test.py
+	----------------------------
+	from lambda_function import lambda_handler
+	res = lambda_handler(None, None)
+	print(res)
+
+11. Create the zip file which includes additional external library ('requests' in this case) and the py files
+
+	NOTE: Remember that we have created a separate folder (ghad-libs) for deployment into which 
+	      we installed only the 'requests' library. (in step-3)
+
+	rm ghad.zip		
+	cd ghad-libs					[going into ghad-libs which has necessary libs]
+	zip -r ../ghad.zip .				[creating the zip in project folder with all the content in the ghad-libs folder]
+	cd ..						[moving back to project folder]
+	zip -g ghad.zip lambda_function.py download.py	[updating zip to add py files also]
+
+12. Upload the zip now again to AWS Lambda web console
+
+13. Adjust the memory settings in case you get error:
+
+	In this program as we are reading remote files, we may need additional memory for lambda function
+	Go to 'Configuration' in AWS console and increase RAM to 512 MB
+
+
+
+

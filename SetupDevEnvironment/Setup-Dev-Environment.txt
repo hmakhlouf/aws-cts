@@ -1,0 +1,233 @@
+===========================================================
+  Setting up local development environment for windows 10
+===========================================================
+
+ --------------------------------------------------------------------	
+ Setup WSL (Windows subsystem for Linux) - To setup Linux on Windows
+ --------------------------------------------------------------------
+
+  ** THIS STEP IS NOT REQUIRED OF YOU ARE ALREADY RUNNING LINUX **
+ 
+    1. Open Poweshell as Administrator  (right click on the icon and select the option)
+	
+    2. Display the list of valid distributions that can be installed
+	
+	wsl -l -o
+		
+	3. Install Ubuntu-20.04
+	
+		wsl --install -d Ubuntu-20.04
+		
+    4. Rebot windows system to continue..
+		-> After rebooting the system should continue the installation
+		-> Provide the required details such as username and password.		
+		
+	5. Check the installed version
+	
+		uname -a
+		
+	6. Exit the powershell
+	
+		exit
+		
+	7. Reconnect to the ubuntu VM
+	
+		-> Open the powershell again:
+		
+		7.1 list the existing instances
+			
+			wsl -l -v
+				
+		7.2 Connect to the existing linux installation just type 'wsl'
+		
+			wsl
+					
+			NOTE: to connect to a specific distribution (in case you jave multiple distributions installed) use:
+			wsl -d <dustribution-name>
+
+ ------------------------------------------------------							
+ Install python 3.8 (if you are running an old version)
+ ------------------------------------------------------
+	=> Follw the steps mentioned in the document "Upgrade python version in Ubuntu"
+
+ ------------------------------------------------------
+ Setup Python environment on top of WSL
+ ------------------------------------------------------
+
+	1. Open powershell as Administrator
+	
+	2. Launch the Ubuntu VM
+	
+		wsl   (or wsl -d Ubuntu-20.04)
+			
+	3. Change to home directory
+	
+		cd
+			
+	4. Install 'venv' and 'pip' modules
+	
+		4.1 Check if venv is already installed by trying to create a virtual environment called 'demo-venv'
+		
+			python3 -m venv demo-venv
+			
+			=> This should fail as we have not yet installed venv.
+			
+		4.2 Install venv and pip
+			
+			sudo apt update
+			sudo apt-get install python3.8-venv
+			sudo apt-get install python3-pip
+				
+		4.3 Validate the virtual environment
+			
+			python3 -m venv demo-venv
+			ls -ltr
+			rm -rf demo-venv    (to remove the folder created above for testing)
+				
+		4.4 Validate pip
+		
+			pip3 install configparser
+				
+ ------------------------------------------------------
+  Install AWS CLI using pip3
+ ------------------------------------------------------
+   
+	1. Open powershell as Administrator
+	
+	2. Launch the Ubuntu VM
+	
+		wsl -d Ubuntu-20.04
+			
+	3. Change to home directory
+	
+		cd
+			
+	4. Install 'awscli' (AWS CLI tool)
+	
+		pip3 install awscli
+			
+	5. exit and re-enter the ubuntu VM
+
+	6. Check AWS CLI installation
+		
+		aws
+			
+ ---------------------------------------------------------------			
+  Setup Python virtual environment for application development
+ ---------------------------------------------------------------
+	Note: Make sure you installed 'python3-venv' module.
+	
+	1. Setup a working directory for all your aws projects:
+	
+		mkdir awsprojects
+		cd awsprojects
+		
+	2. Create a python virtual environment in your project working directory.
+	
+		python3 -m venv demo-venv
+		
+		=> This creates a directory called "demo-venv" which contains all the required 
+		   libraries for self-contained python development environment.
+		   
+	3. Activate your venv created above
+	
+		source demo-venv/bin/activate
+		
+	4. Install the necessary AWS module called 'boto3' inside the virtual environment 
+	   (make sure you run this after step 3)
+	   
+		pip3 install boto3
+	   
+	5. Setup Jupyter Lab 
+	
+		pip3 install jupyterlab
+			
+ ------------------------------------------			
+ Configure AWS user on your local machine
+ ------------------------------------------
+	
+    1. Log-in to AWS Management Console with root account (as with Admin account)
+
+    2. Create an AWS User
+
+    3. Download the Credentials file (in the last step of the user creation process)
+
+    4. Now a open a terminal and configure the user
+
+		aws configure
+	             => Enter the values for 'AWS Access Key ID' and 'AWS Secret Access Key'
+		     => Keep the region and format as defaults
+				
+	5. Test the configuration
+	
+		aws s3 list
+		     => The following command lists all the buckets in the user account
+			
+ -------------------------------------------------------------------------		
+ Setup Python venv (virtual environment) and install boto3 and JupyterLab
+ -------------------------------------------------------------------------
+	
+	1. Setup a working directory for all your aws projects:
+	
+		mkdir awsprojects
+		cd awsprojects
+		
+	2. Create a python virtual environment in your project working directory.
+			
+		python3 -m venv aws-venv
+			
+		=> This creates a directory called 'aws-venv' with all basic python packages
+			
+	3. Activate the venv  (i.e start working inside the venv)
+	
+		source ./aws-venv/bin/activate
+			
+	4. Install boto3 inside the venv
+		
+		=> NOTE: Make sure you have activated the venv and inside it.
+			
+		pip3 install boto3
+				
+	5. Install JupyterLab
+		
+		=> NOTE: Make sure you have activated the venv and inside it.
+			
+		pip3 install jupyterlab
+
+ ---------------		    
+ Validate boto3
+ ---------------
+	
+	1. Login to python terminal and test a sample code using boto3
+	
+		python3   (to enter the python shell)
+		
+		import boto3
+		
+		s3client = boto3.client("s3")
+		s3client.list_buckets()
+	
+ --------------------			
+ Validate JupyterLab
+ --------------------
+	
+	1. Lauch Jupyter Lab from with the venv (activated environement)
+	
+		jupyter lab
+			
+	2. Create a notebook inside the jupyter lab and run the following code
+	
+		import boto3
+			
+		s3client = boto3.client("s3")
+		s3client.list_buckets()
+			
+		buckets = s3client.list_buckets()
+		bucket = buckets[0]
+		type(bucket)
+		bucket
+			
+		bucket_list = [bucket["Name"] for bucket in buckets]
+		bucket_list
+	
+		

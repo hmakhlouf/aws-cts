@@ -1,0 +1,139 @@
+===========================================================
+  Setting up local development environment for windows 10
+===========================================================
+
+
+ Setup WSL (Windows subsystem for Linux)
+ --------------------------------------
+ 
+    1. Open Poweshell as Administrator  (right click on the icon and select the option)
+	
+    2. Display the list of valid distributions that can be installed
+	
+			wsl -l -o
+		
+	3. Install Ubuntu-20.04
+	
+			wsl --install -d Ubuntu-20.04
+		
+    4. Rebot windows system to continue..
+		-> After rebooting the system should continue the installation
+		-> Provide the required details such as username and password.		
+		
+	5. Check the installed version
+	
+			uname -a
+		
+	6. Exit the powershell
+	
+			exit
+		
+	7. Reconnect to the ubuntu VM
+	
+		-> Open the powershell again:
+		
+		7.1 list the existing instances
+			
+					wsl -l -v
+				
+		7.2 Connect to the existing linux installation just type 'wsl'
+		
+					wsl
+					
+					NOTE: to connect to a specific distribution (in case you jave multiple distributions installed) use:
+							wsl -d <dustribution-name>
+
+   Setup Pyhton environment on top of WSL
+   --------------------------------------
+
+	1. Open powershell as Administrator
+	
+	2. Launch the Ubuntu VM
+	
+			wsl   (or wsl -d Ubuntu-20.04)
+			
+	3. Change to home directory
+	
+			cd
+			
+	4. Install 'venv' and 'pip' modules
+	
+		4.1 Check if venv is already installed by trying to create a virtual environment called 'demo-venv'
+		
+			python3 -m venv demo-venv
+			
+			=> This should fail as we have not yet installed venv.
+			
+		4.2 Install venv and pip
+			
+				sudo apt update
+				sudo apt-get install python3.8-venv
+				sudo apt-get install python3-pip
+				
+		4.3 Validate the virtual environment
+			
+				python3 -m venv demo-venv
+				ls -ltr
+				rm -rf demo-venv    (to remove the folder created above for testing)
+				
+		4.4 Validate pip
+		
+				pip3 install configparser
+				
+
+   Install AWS CLI using pip
+   --------------------------
+   
+	1. Open powershell as Administrator
+	
+	2. Launch the Ubuntu VM
+	
+			wsl -d Ubuntu-20.04
+			
+	3. Change to home directory
+	
+			cd
+			
+	4. Install 'awscli' (AWS CLI tool)
+	
+			pip3 install awscli
+			
+	5. exit and re-enter the ubuntu VM
+
+	6. Check AWS CLI installation
+		
+			aws
+			
+			
+	Setup Python virtual environment for application development
+	------------------------------------------------------------
+	Note: Make sure you installed 'python3-venv' module.
+	
+	1. Setup a working directory for all your aws projects:
+	
+		mkdir awsprojects
+		cd awsprojects
+		
+	2. Create a python virtual environment in your project working directory.
+	
+		python3 -m venv demo-venv
+		
+		=> This creates a directory called "demo-venv" which contains all the required 
+		   libraries for self-contained python development environment.
+		   
+	3. Activate your venv created above
+	
+		source demo-venv/bin/activate
+		
+	4. Install the necessary AWS module called 'boto3' inside the virtual environment 
+	   (make sure you run this after step 3)
+	   
+	   pip3 install boto3
+	   
+	5. Setup Jupyter Lab and validate boto3
+	
+		pip3 install jupyterlab
+		
+	
+	
+	
