@@ -1,0 +1,147 @@
+
+  Lab 2: Create and ingest data into a Kinesis data stream using Kinesis Agent
+  ----------------------------------------------------------------------------
+
+   *** NOTE: This lab is a continuation of previous lab i.e Lab 1 ****
+
+
+   What is Kinesis agent?
+   ----------------------
+   Kinesis Agent is a stand-alone Java software application that offers an easy way to collect 
+   and send data to Kinesis Data Streams. The agent continuously monitors a set of files and sends 
+   new data to your stream.
+
+
+
+   PREREQUISITE: Do this before step 1
+   ------------------------------------	
+   => Setup Cloud9 environment i.e complete Steps 1, 2 and 3 from the Lab-1
+
+
+
+    1. Open the Cloud9 console and install kinesis agent. 
+	Run the following command:
+
+		sudo yum install –y aws-kinesis-agent
+
+
+    2. Setup a shell script to emit streaming data to a log file. 
+
+	2.1 Create a file 'generatelogs.sh' in the home directory and give execute permissions to it
+
+		sudo vi generatelogs.sh
+
+	2.2 Paste the following code in the file and save it: (:wq to save)
+
+		while(true) do
+		   sleep 1;
+		   echo `date +"%H:%M:%S"` "log text" >> /tmp/app.log
+		done;
+
+	2.3 Give it executable permissions
+
+		sudo chmod +x generatelogs.sh
+	
+
+    3. Configure the Kinesis agent
+
+	3.1 Run the following command to open agent.json file
+
+		sudo vi /etc/aws-kinesis/agent.json
+
+	3.2 In this file, change the "filePattern" to "/tmp/app.log" and "kinesisStream" to your stream name (ex: "input-stream")
+	     Make sure your code looks as follows. Remove the flow that mentions delivery stream.
+
+		{
+		  "cloudwatch.emitMetrics": true,
+		  "kinesis.endpoint": "",
+		  "firehose.endpoint": "",
+		  
+		  "flows": [
+		    {
+		      "filePattern": "/tmp/app.log*",
+		      "kinesisStream": "input-stream",
+		      "partitionKeyOption": "RANDOM"
+		    }
+		  ]
+		}
+
+	3.3 Save the file and quit (:wq to save in vi)
+
+    
+    4. Add the required policies to the IAM roles attcahed to your Cloud9 instance
+
+	4.1 Open the IAM role 'AWSCloud9SSMAccessRole'
+	4.2 Make sure you have the following two policies. (Add Kinesis and CloudWatch access policies)
+		
+		CloudWatchFullAccess	
+		AmazonKinesisFullAccess	
+		AWSCloud9SSMInstanceProfile
+
+
+    5. Open a new Cloud9 terminal window and start the shell script that generate the logs
+
+		./generatelogs.sh
+
+
+    6. Start the Kinesis agent and monitor the agent logs and stream metrics
+	
+	6.1 Run the following command to start the agent.
+
+		sudo service aws-kinesis-agent start
+
+		Other commands:
+		sudo service aws-kinesis-agent status
+		sudo service aws-kinesis-agent stop
+
+	6.2. Open a new Cloud9 terminal add monitor the agent logs.
+
+		cd var/log/aws-kinesis-agent
+		tail -f aws-kinesis-agent.log
+
+	6.3 Wait for 5 to 10 minutes and check the stream metrics
+
+
+    7. Stop the agent and the shell script
+
+	7.1 Run the following command to stop the agent.
+
+		sudo service aws-kinesis-agent stop
+
+	7.2 Check for the status of the agent. It should be in 'inactive' state
+
+		sudo service aws-kinesis-agent status
+
+	7.3 Stop generating the logs by killing the shell script. 
+             Ctrl+C on the terminal where generatelogs.sh script is running.
+
+
+    Clean up your resources
+    -----------------------
+
+    ** Unless you want to continue with the next lab, it is better to clean up your resource to avoid charges. 
+
+	=> Open the Cloud9 console and delete the environment.
+	=> Open the Kinesis console and delete the stream.
+	=> Delete the following roles:
+		AWSCloud9SSMAccessRole
+		AWSServiceRoleForAWSCloud9
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,145 @@
+
+  Lab 1: Create and ingest data into a Kinesis data stream using SDK and KPL
+  --------------------------------------------------------------------------
+
+
+   1. Open the 'AWS Kinesis' console and create a 'Kinesis Data Streams'
+
+	Region: us-east-1  i.e US East (N.Virginia)  
+	Data stream name: input-stream
+	Capacity mode: On-demand
+
+	Click on 'Create data stream' button
+ 
+   2. Create a Cloud9 instance
+
+	2.1 Go to Cloud9 Console
+	2.2 Click on 'Create environment' button
+	2.3 Enter the details
+		Name: ctscloud9
+		Environment type: New EC2 instance
+		New EC2 instance:	
+			Instance type: t2.micro (1 GiB RAM + 1 vCPU)
+			Platform: Amazon Linux 2
+			Timeout: 30 minutes
+	2.4 Finish the process by reviewing the setting and 'Create environment'
+	2.5 This will lauch a Cloud9 environment window
+
+   3. Open the Cloud9 instance and install boto3
+	
+	3.1 Select the environment and Click on 'Open in Cloud9' button
+	3.2 In the terminal window and run the following command to install boto3
+	
+		pip install boto3
+
+
+    Ingest records into the data stream using Python boto3 SDK.
+    ----------------------------------------------------------
+
+    4. Upload a local file into cloud9 environment.
+
+	4.1 Go to the Cloud9 terminal and select 'File -> Upload local files' menu option
+	4.2 Click on 'Select files' button and select 'kinesis-datastream-sdk.py' file (provided to you)
+	4.3 Make sure the following values are in accordance with your stream name and region:
+
+		kdsname='input-stream'
+		region='us-east-1'
+
+	4.4 Run the python file to ingest data into the stream. Run the following command at the terminal
+		
+		python kinesis-datastream-sdk.py
+
+		NOTE: Make sure you installed boto3 before running the above command (as mentioned in step 3)
+
+
+    5. Check the Stream metrics
+
+	*** NOTE: It may take upto 10 to 15 min for the metrics to reflect on the monitoring console.  ***
+
+	5.1 Go to Kinesis console and select the data stream
+	5.2 Click on 'Monitoring' tab
+		-> Here you see various metrics related to the stream.
+
+   
+    6. Stop sending the data to the stream by killing the process you started in step 4.
+
+	6.1 Goto the Cloud9 terminal. Here you should see the data being ingested into the stream by the python SDK script
+	6.2 Stop the script by clicking Ctrl+C in the terminal window.
+
+
+
+    Ingest records into the data stream using KPL
+    ---------------------------------------------
+   
+    7. Upload 'kinesis-producer-library-code' KPL Java code into Cloud9 IDE.
+
+	7.1 Extract the 'kinesis-producer-library-code.zip' file to a local folder called 'kinesis-producer-library-code'
+	7.2 Open the Cloud9 terminal and select 'File -> Upload local files' menu option
+	7.3 Click on 'Select folder' button and select 'kinesis-producer-library-code' folder and upload it.
+	7.4 Browse around the code files and check "A_SimpleProducer" class.
+	    ** NOTE: Make sure the stream & region used in the code are match yours **
+
+
+    8. Install maven in Cloud9 instand and compile the applicalication using maven.
+
+	8.1 Before running KPL package, we need to build the code using maven. 
+	    For that we need to install maven first. Run the following command to do so.
+
+		sudo yum install maven -y
+
+	8.2 cd to the project's master folder to build the project
+
+		cd kinesis-producer-library-code/
+
+	8.3 Now compile the package using maven. Run the following command.
+
+		mvn clean compile package
+
+		-> After this step, you should see a compiled jar file under target folder.
+
+	8.4 Run the A_SimpleProducer class using the following command.
+
+		java -cp target/amazon-kinesis-replay-1.0-SNAPSHOT.jar A_SimpleProducer
+
+	The above program should start ingesting the data from the data/taxi-trips.csv file into the stream.
+
+
+    9. Wait for 5 to 10 minutes and check the stream metrics
+
+
+    10. Stop the program.
+		
+	10.1 Goto the Cloud9 terminal. 
+	10.2 Stop the script by clicking Ctrl+C in the terminal window.
+	
+
+    
+    Clean up your resources
+    -----------------------
+
+    ** Unless you want to continue with the next lab, it is better to clean up your resource to avoid charges. 
+
+	=> Open the Cloud9 console and delete the environment.
+	=> Open the Kinesis console and delete the stream.
+	=> Delete the following roles:
+		AWSCloud9SSMAccessRole
+		AWSServiceRoleForAWSCloud9
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

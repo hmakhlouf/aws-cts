@@ -1,0 +1,141 @@
+
+  Lab 5: Consume data from a data stream using Kinesis Client Library (KCL)
+  -------------------------------------------------------------------------
+
+   1. Open the 'AWS Kinesis' console and create a 'Kinesis Data Streams'
+
+	Region: us-east-1  i.e US East (N.Virginia)  
+	Data stream name: input-stream
+	Capacity mode: On-demand
+
+	Click on 'Create data stream' button
+ 
+   2. Create a Cloud9 instance
+
+	2.1 Go to Cloud9 Console
+	2.2 Click on 'Create environment' button
+	2.3 Enter the details
+		Name: ctscloud9
+		Environment type: New EC2 instance
+		New EC2 instance:	
+			Instance type: t2.micro (1 GiB RAM + 1 vCPU)
+			Platform: Amazon Linux 2
+			Timeout: 30 minutes
+	2.4 Finish the process by reviewing the setting and 'Create environment'
+	2.5 This will lauch a Cloud9 environment window
+
+   3. Open the Cloud9 instance and install boto3
+	
+	3.1 Select the environment and Click on 'Open in Cloud9' button
+	3.2 In the terminal window and run the following command to install boto3
+	
+		pip install boto3
+
+
+    Ingest records into the data stream using Python boto3 SDK.
+    ----------------------------------------------------------
+
+    4. Upload a local file into cloud9 environment.
+
+	4.1 Go to the Cloud9 terminal and select 'File -> Upload local files' menu option
+	4.2 Click on 'Select files' button and select 'kinesis-datastream-sdk.py' file (provided to you)
+	4.3 Make sure the following values are in accordance with your stream name and region:
+
+		kdsname='input-stream'
+		region='us-east-1'
+
+	4.4 Run the python file to ingest data into the stream. Run the following command at the terminal
+		
+		python kinesis-datastream-sdk.py
+
+		NOTE: Make sure you installed boto3 before running the above command (as mentioned in step 3)
+
+
+    5. Check the Stream metrics
+
+	*** NOTE: It may take upto 10 to 15 min for the metrics to reflect on the monitoring console.  ***
+
+	5.1 Go to Kinesis console and select the data stream
+	5.2 Click on 'Monitoring' tab
+		-> Here you see various metrics related to the stream.
+
+   
+    6. Stop sending the data to the stream by killing the process you started in step 4.
+
+	6.1 Goto the Cloud9 terminal. Here you should see the data being ingested into the stream by the python SDK script
+	6.2 Stop the script by clicking Ctrl+C in the terminal window.
+
+
+
+    Setup KCL project in cloud9 environment
+    ---------------------------------------
+
+    7. Upload 'kinesis-client-library-code' KCL Java code into Cloud9 IDE.
+
+	7.1 Extract the 'kinesis-client-library-code.zip' file to a local folder called 'kinesis-client-library-code'
+	7.2 Open the Cloud9 terminal and select 'File -> Upload local files' menu option
+	7.3 Click on 'Select folder' button and select 'kinesis-client-library-code' folder and upload it.
+	7.4 Examine App.java code
+   
+    8. Insall necessary module and compile the code.
+       Run the following commands at the terminal. Make sure the value match as per your setup.
+
+		cd kinesis-client-library-code/
+		cd kcl-app/
+
+		sudo yum install maven -y
+		mvn clean compile assembly\:single
+
+		export STREAM_NAME=input-stream
+		export AWS_REGION=us-east-1
+		export APPLICATION_NAME=ImmersiondayKCLConsumer
+
+    9. Run the program to start listening from the stream for the records. Run the following command.	
+		
+		java -jar target/kcl-app-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+    10. Start ingesting data into the data stream using the python sdk program
+
+	10.1 Open another terminal and make sure you are in the environment folder (i.e /home/ec2-user/environment)
+	10.2 Run the following command to start ingesting the data.
+
+		python kinesis-datastream-sdk.py
+
+    11. Now check the output from the KCL app.
+	
+	11.1 Now go back to the terminal window and wait for a coupele of minutes
+	11.2 You should see the records being read and printed on the console (as JSON objects)
+
+
+   
+    Clean up your resources
+    -----------------------
+
+    ** Unless you want to continue with the next lab, it is better to clean up your resource to avoid charges. 
+
+	=> Open the Cloud9 console and delete the environment.
+	=> Delete the Python function (you may keep the function, but surely delete or disable the trigger)
+	=> Delete the DynamoDB table
+	=> Delete the Kinesis data stream.
+	=> Delete the following roles:
+		AWSCloud9SSMAccessRole
+		AWSServiceRoleForAWSCloud9
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

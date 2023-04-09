@@ -1,0 +1,187 @@
+
+  Lab 7: Amazon Kinesis Data Analytics - A streaming data pipeline demo
+  ------------------------------------------------------------------
+	Reference document: 
+	https://aws.amazon.com/blogs/aws/introducing-amazon-kinesis-data-analytics-studio-quickly-interact-with-streaming-data-using-sql-python-or-scala/
+
+
+
+
+   1. Open the 'AWS Kinesis' console and create two 'Kinesis Data Streams'
+
+	Region: us-east-1  i.e US East (N.Virginia)  
+	Data streams (create two data streams): my-input-stream & my-output-stream
+	Capacity mode: On-demand
+
+	Click on 'Create data stream' button
+
+
+   2. Create an S3 bucket as the target of the data pipeline
+
+	Bucket name: cts-kinesis-data-analytics
+
+
+   3. Set up a Firehose 'Delivery stream' to write data to S3 from the output data stream (i.e my-output-stream)
+
+	3.1 Go to Kinesis Console and click on the 'Delivery streams' option in the left menu
+	3.2 Click on 'Create delivery stream' button and enter the following details:
+		
+		Choose source and destination
+			Source: Amazon Kinesis data Streams
+			Destination: Amazon S3
+		Source settings
+			Kinesis data stream: my-output-stream  (browse and select)
+		Delivery stream name
+			Delivery stream name: my-delivery-stream		
+		Destination settings
+			S3 bucket: s3://cts-kinesis-data-analytics 
+			S3 bucket prefix: data/
+			S3 bucket error output prefix: error/
+			Buffer hints, compression and encryption -> S3 buffer hints -> Buffer interval: 60 seconds		
+
+	3.3 Click on 'Create delivery stream' button
+
+
+    4. Create Kinesis Data Analytics Studio notebook and run it
+
+	4.1 Click on the 'Analytics applications' -> 'Create Studio notebook' menu option provide the details
+
+		Creation method: Quick create with sample code
+		Studio notebook name: my-notebook
+		AWS Glue database: taxi-trips-db
+
+	4.2 Click on 'Create Studio notebook' button
+
+	4.3 Make a note of the IAM role
+		in my case it is :  kinesis-analytics-my-notebook-us-east-1
+
+	4.4 Wait until the note book is created, select it and click on 'Run' button
+
+	4.5 Wait until the notebook comes to 'Running' status
+
+
+   5. Go to IAM console and add required policies to the IAM role
+
+	Role Name: kinesis-analytics-my-notebook-us-east-1
+	Policies to be added: 
+		AmazonS3FullAccess
+		AmazonKinesisFullAccess	
+		AWSGlueConsoleFullAccess	
+		AmazonKinesisAnalyticsFullAccess
+
+
+   6. Set IAM permissions on the destination stream (i.e. 'my-output-stream')
+	6.1 Open the Studio notebook and click on 'Edit IAM permission' button
+	6.2 In the 'Included destinations in IAM policy' section click on 'Choose destination' button
+	6.3 Select 'my-output-stream' and save changes.
+
+
+   7. Create a Cloud9 instance
+
+	7.1 Go to Cloud9 Console
+	7.2 Click on 'Create environment' button
+	7.3 Enter the details
+		Name: ctscloud9
+		Environment type: New EC2 instance
+		New EC2 instance:	
+			Instance type: t2.micro (1 GiB RAM + 1 vCPU)
+			Platform: Amazon Linux 2
+			Timeout: 30 minutes
+	7.4 Finish the process by reviewing the setting and 'Create environment'
+	7.5 This will lauch a Cloud9 environment window
+
+
+   8. Open the Cloud9 instance and install boto3
+	
+	8.1 Select the environment and Click on 'Open in Cloud9' button
+	8.2 In the terminal window and run the following command to install boto3
+	
+		pip install boto3
+
+
+    9. Upload a local file into cloud9 environment.
+
+	9.1 Go to the Cloud9 terminal and select 'File -> Upload local files' menu option
+	9.2 Click on 'Select files' button and select 'kinesis-data-analytics-1.py' file (provided to you)
+	9.3 Make sure the following values are in accordance with your stream name and region:
+
+		kdsname='my-input-stream'
+		region='us-east-1'
+
+	9.4 Run the python file to ingest data into the stream. Run the following command at the terminal
+		
+		python kinesis-data-analytics-1.py
+
+	9.5 Check if the records are being insert and stop the script using Ctrl+C command.
+
+
+   10. Open the 'Apache Zeppelin' and write your code
+
+	10.1 After the Studio notebook comes to 'running' status, click on 'Open in Apache Zeppelin'
+	10.2 Create a new note and name it 'sensor-data'
+	10.3 Paste the code in 'script 1' from the 'L07-Kinesis-Data-Analytics-Scripts.txt' file (provided to you)
+	     and run the cell. 
+	10.4 Check for the 'sensor_data' table being created by open the 'AWS Glue' console
+
+   11. Start ingesting the data to input stream and query the results in real time from zeppelin notebook
+
+	11.1 Go to the Cloud9 terminal and run the python script
+
+		 python kinesis-data-analytics-1.py
+
+	11.2 Go back to the zeppelin notebook and run 'script 2' on the next cell
+	     Wait for a minute and you will see the data being queried in real time.
+
+	11.3 Kill/pause the query after a few seconds
+
+	11.4 Now run 'script 3' on the next cell
+	     Wait for a minute and you will see the data being queried in real time.
+
+	11.5 Kill/pause the query after a few seconds
+	
+
+    12. Create a new table for the output stream and ingest the aggregates from the input stream into it.
+
+	12.1 In the zeppelin notebook, run 'script 4' to create a table for output stream.
+	12.2 Check for the 'sensor_state' table being created by open the 'AWS Glue' console
+	12.3 In the zeppelin notebook, run 'script 5' to ingest data into 'sensor_state' table
+	12.4 Wait for a couple for minutes for the batches to build up. 
+
+    13. Validate the reults
+
+	13.1 Make sure your firehose delivery stream is 'Active'.
+		As the data being ingested into output stream, this data is stored in the S3 bucket (data lake)
+		by the firehose deliver stream.
+	13.2 Open the S3 bucket and see the data being added to the bucket.
+ 
+   
+    
+    Clean up your resources
+    -----------------------
+
+    ** Unless you want to continue with the next lab, it is better to clean up your resource to avoid charges. 
+
+	=> Open the Cloud9 console and delete the environment.
+	=> Open the Kinesis console and delete both the data streams and delivery stream.
+	=> Stop and delete the Studio notebook
+	=> Delete the table from the Glue console.
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

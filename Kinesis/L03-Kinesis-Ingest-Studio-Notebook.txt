@@ -1,0 +1,105 @@
+
+  Lab 3: Write data to a data stream using Kinesis Data Analytics Studio Notebook
+  -------------------------------------------------------------------------------
+ 
+   1. Create an S3 bucket and upload the data file
+	
+	Bucket Name: cts-taxitrips 
+	File to be uploaded: taxi-trips.csv     (provided to you)
+
+
+   2. Create a Glue database
+	
+	Database name: taxi-trips-db
+
+
+   3. Open the 'AWS Kinesis' console and create a 'Kinesis Data Streams'
+
+	Region: us-east-1  i.e US East (N.Virginia)  
+	Data stream name: input-stream
+	Capacity mode: On-demand
+
+	Click on 'Create data stream' button
+
+
+   4. From the left menu on Kinesis console click the following link.
+
+	Analytics applications -> Studio notebooks
+
+   
+   5. Create Studio notebook and run it
+
+	5.1 Click on the 'Analytics applications' -> 'Create Studio notebook' menu option provide the details
+
+		Creation method: Quick create with sample code
+		Studio notebook name: Taxi-Trips-Studio-Notebook-1
+		AWS Glue database: taxi-trips-db
+
+	5.2 Click on 'Create Studio notebook' button
+
+	5.3 Make a note of the IAM role
+		in my case it is : kinesis-analytics-Taxi-Trips-Studio-Notebook-1-us-east-1
+
+	5.4 Wait until the note book is created, select it and click on 'Run' button
+
+	5.5 Wait until the notebook comes to 'Running' status
+
+
+   6. Go to IAM console and add required policies to the IAM role
+
+	Role Name: kinesis-analytics-Taxi-Trips-Studio-Notebook-1-us-east-1
+	Policies to be added: 
+		AmazonS3FullAccess
+		AmazonKinesisFullAccess	
+		AWSGlueConsoleFullAccess	
+		AmazonKinesisAnalyticsFullAccess
+
+   7. Open the 'Apache Zeppelin' and import a notebook
+
+	7.1 After the Studio notebook comes to 'running' status, click on 'Open in Apache Zeppelin'
+	7.2 Click on ' Import note' in the Zeppelin window
+	7.3 Click on the 'Select JSON file/IPYNB file'
+	7.2 Browse and select the following Zeppelin file
+		file name: taxi-trips-s3-to-kinesis.zpln     (provided to you)
+	7.3 Click on the 'Taxi Trips Data Loading from S3 to Kinesis-1' link (this is the name of the notebook)
+	    to open the zepplin notebook. 
+
+   8. Run cells one-by-one to complete the lab. 
+
+	** NOTE: Make sure your replace the bucket name with the URI of the file you created in step 1
+
+	We do the following in this lab:	
+		
+           * Create a Glue catalog table to query data from S3 bucket.
+	   * Create an in-memory table to stream data from S4 to a Kinesis data stream.
+	   * Execute queries on the in-memory table to analyze streaming data.
+	   
+        ** NOTE: Make sure you stop the query after seeing results. 
+	
+
+    Clean up your resources
+    -----------------------
+	=> Close the Zeppelin notebook
+    	=> Stop and delete the Studio notebook
+	=> Open the Kinesis console and delete the stream.
+	=> Delete the S3 bucket (cts-taxitrips)
+	=> Delete the IAM role: kinesis-analytics-Taxi-Trips-Studio-Notebook-1-us-east-1
+		
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

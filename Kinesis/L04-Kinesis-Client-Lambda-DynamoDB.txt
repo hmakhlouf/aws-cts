@@ -1,0 +1,168 @@
+
+  Lab 4: Create a Lambda client to consume data from the stream and write to DynamoDB
+  -----------------------------------------------------------------------------------
+
+
+   1. Open the 'AWS Kinesis' console and create a 'Kinesis Data Streams'
+
+	Region: us-east-1  i.e US East (N.Virginia)  
+	Data stream name: input-stream
+	Capacity mode: On-demand
+
+	Click on 'Create data stream' button
+ 
+   2. Create a Cloud9 instance
+
+	2.1 Go to Cloud9 Console
+	2.2 Click on 'Create environment' button
+	2.3 Enter the details
+		Name: ctscloud9
+		Environment type: New EC2 instance
+		New EC2 instance:	
+			Instance type: t2.micro (1 GiB RAM + 1 vCPU)
+			Platform: Amazon Linux 2
+			Timeout: 30 minutes
+	2.4 Finish the process by reviewing the setting and 'Create environment'
+	2.5 This will lauch a Cloud9 environment window
+
+   3. Open the Cloud9 instance and install boto3
+	
+	3.1 Select the environment and Click on 'Open in Cloud9' button
+	3.2 In the terminal window and run the following command to install boto3
+	
+		pip install boto3
+
+
+    Ingest records into the data stream using Python boto3 SDK.
+    ----------------------------------------------------------
+
+    4. Upload a local file into cloud9 environment.
+
+	4.1 Go to the Cloud9 terminal and select 'File -> Upload local files' menu option
+	4.2 Click on 'Select files' button and select 'kinesis-datastream-sdk.py' file (provided to you)
+	4.3 Make sure the following values are in accordance with your stream name and region:
+
+		kdsname='input-stream'
+		region='us-east-1'
+
+	4.4 Run the python file to ingest data into the stream. Run the following command at the terminal
+		
+		python kinesis-datastream-sdk.py
+
+		NOTE: Make sure you installed boto3 before running the above command (as mentioned in step 3)
+
+
+    5. Check the Stream metrics
+
+	*** NOTE: It may take upto 10 to 15 min for the metrics to reflect on the monitoring console.  ***
+
+	5.1 Go to Kinesis console and select the data stream
+	5.2 Click on 'Monitoring' tab
+		-> Here you see various metrics related to the stream.
+
+   
+    6. Stop sending the data to the stream by killing the process you started in step 4.
+
+	6.1 Goto the Cloud9 terminal. Here you should see the data being ingested into the stream by the python SDK script
+	6.2 Stop the script by clicking Ctrl+C in the terminal window.
+
+
+
+    Setup DynamoDB table into which streaming data will be written
+    --------------------------------------------------------------
+
+    7. Open the DynamoDB console and create a new table
+	
+	Table Name: TaxiTrips
+	Partition Key: id    type: String
+
+
+
+    Create Lambda function to consume data from the data stream and write to DynamoDB
+    ---------------------------------------------------------------------------------
+   
+    8. Create an IAM role with necessary policies to be used with the Lamba function
+	
+		Role Name: CTSLambdaDemoRole
+		Policies to be attached: AmazonKinesisFullAccess
+				 AmazonDynamoDBFullAccess
+				 CloudWatchFullAccess
+
+    9. Create a lambda function with the following details:
+
+		Author from scratch
+		Function name: py-kinesis-client-dynamodb
+		Runtime: Python 3.9
+		Permissions: Use an existing role;  Existing role: CTSLambdaDemoRole
+
+		Code: paste the code from "kinesis-client-dynamodb.py" script provided to you
+
+    10. Add a Kinesis trigger to the lambda function
+
+	    Trigger details: 
+		Kinesis
+		Kinesis stream: input-stream
+		Activate trigger: Enable (i.e keep it in checked state)
+		Batch size: 10
+		Batch window: 10
+		Retry attempts: 2
+
+
+    
+    Start ingesting the data into the stream using the python sdk script
+    --------------------------------------------------------------------
+
+    11. Run the python file to ingest data into the stream. 
+
+	11.1 Open the Cloud9 IDE
+	11.2 Run the following command at the Cloud9 terminal
+		
+		python kinesis-datastream-sdk.py
+
+		NOTE: Make sure you installed boto3 before running the above command (as mentioned in step 3)
+
+
+    Monitor and validate the functionality
+    ---------------------------------------
+
+     12. Open CloudWatch console and check the log groups.
+
+     13. Open the DynamoDB table and check for the data being added to the table.
+
+     14. Stop the python boto3 sdk script by using Ctrl+C at the terminal.
+         This will stop ingesting the data into the stream
+
+     15. Disable the trigger on the lambda function.
+
+   
+    Clean up your resources
+    -----------------------
+
+    ** Unless you want to continue with the next lab, it is better to clean up your resource to avoid charges. 
+
+	=> Open the Cloud9 console and delete the environment.
+	=> Delete the Python function (you may keep the function, but surely delete or disable the trigger)
+	=> Delete the DynamoDB table
+	=> Delete the Kinesis data stream.
+	=> Delete the following roles:
+		AWSCloud9SSMAccessRole
+		AWSServiceRoleForAWSCloud9
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

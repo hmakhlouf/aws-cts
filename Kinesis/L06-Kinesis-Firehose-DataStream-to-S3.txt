@@ -1,0 +1,150 @@
+
+  Lab 6: Firehose delivery stream to write data from data stream to S3 in Parquet format
+  --------------------------------------------------------------------------------------
+
+   1. Open the 'AWS Kinesis' console and create a 'Kinesis Data Streams'
+
+	Region: us-east-1  i.e US East (N.Virginia)  
+	Data stream name: input-stream
+	Capacity mode: On-demand
+
+	Click on 'Create data stream' button
+
+ 
+   2. Create a Cloud9 instance
+
+	2.1 Go to Cloud9 Console
+	2.2 Click on 'Create environment' button
+	2.3 Enter the details
+		Name: ctscloud9
+		Environment type: New EC2 instance
+		New EC2 instance:	
+			Instance type: t2.micro (1 GiB RAM + 1 vCPU)
+			Platform: Amazon Linux 2
+			Timeout: 30 minutes
+	2.4 Finish the process by reviewing the setting and 'Create environment'
+	2.5 This will lauch a Cloud9 environment window
+
+
+   3. Open the Cloud9 instance and install boto3
+	
+	3.1 Select the environment and Click on 'Open in Cloud9' button
+	3.2 In the terminal window and run the following command to install boto3
+	
+		pip install boto3
+
+
+    Ingest records into the data stream using Python boto3 SDK.
+    ----------------------------------------------------------
+
+    4. Upload a local file into cloud9 environment.
+
+	4.1 Go to the Cloud9 terminal and select 'File -> Upload local files' menu option
+	4.2 Click on 'Select files' button and select 'kinesis-datastream-sdk.py' file (provided to you)
+	4.3 Make sure the following values are in accordance with your stream name and region:
+
+		kdsname='input-stream'
+		region='us-east-1'
+
+	4.4 Run the python file to ingest data into the stream. Run the following command at the terminal
+		
+		python kinesis-datastream-sdk.py
+
+		NOTE: Make sure you installed boto3 before running the above command (as mentioned in step 3)
+
+
+    5. Setup an S3 bucket to write the data to from the stream
+
+		Bucket Name: cts-taxitrips-firehose
+
+
+    6. Create a table 'nyctaxitrips' in Athena to query the data from S3 bucket
+		
+	6.1 select the database 'taxi-trips-db'  (this database is created in earlier labs using Glue)
+	6.2 In the query window, paste the SQL from the script file 'kinesis_firehose_athena_taxitrips.sql'	     
+	6.3 Modify the last last line in the script as shown below:
+	     LOCATION 's3://cts-taxitrips-firehose/nyctaxitrips/
+	      *** MAKE SURE TO USE THE CORRECT BUCKET NAME ****
+	6.4 Make sure the table is created correctly.
+	
+
+    7. Set up a Firehose Delivery stream to write data to S3 from a data-stream
+
+	7.1 Go to Kinesis Console and click on the 'Delivery streams' option in the left menu
+	7.2 Click on 'Create delivery stream' button and enter the following details:
+		
+		Choose source and destination
+			Source: Amazon Kinesis data Streams
+			Destination: Amazon S3
+		Source settings
+			Kinesis data stream: input-stream   (browse and select)
+		Delivery stream name
+			Delivery stream name: KDS-S3-TaxiTrips
+		Convert record format
+			Enable record format conversion: Check
+			Output format: Apache Parquet
+			AWS Glue region: US East (N.Virginia)
+			AWS Glue database: taxi-trips-db
+			AWS Glue table: nyctaxitrips  (this is created in Athena in step 5)
+		Destination settings
+			S3 bucket: s3://cts-taxitrips   
+			Dynamic partitioning: Enabled
+			S3 bucket prefix: nyctaxitrips/year=!{timestamp:YYYY}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
+			S3 bucket error output prefix: nyctaxitripserror/!{firehose:error-output-type}/year=!{timestamp:YYYY}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
+			Buffer hints, compression and encryption
+				S3 buffer hints
+					Buffer interval: 60 seconds		
+
+	7.3 Click on 'Create delivery stream' button
+
+
+    8. Ingest the data into the data stream
+
+	8.1 Go back to the Cloud9 environment and run the following command at the console:
+
+		python kinesis-datastream-sdk.py
+	
+	8.2 Keep ingesting the data for upto 5 minutes.
+
+    9. Check the data in the S3 bucket
+
+	   Go to S3 bucket and see the data being partitioned and added as parquet files
+
+    10. Query the data using Athena
+
+	10.1 Go back to Athena query editor and refresh the tables
+	10.2 Click on the context icon (verticle dots) besides the table name select 'Load partitions'
+		-> This will load the partitions from S3
+	10.3 Clicking on the context menu, select 'Previe table' option
+		-> This should query the data from S3 parquet files.	
+
+    
+    Clean up your resources
+    -----------------------
+
+    ** Unless you want to continue with the next lab, it is better to clean up your resource to avoid charges. 
+
+	=> Open the Cloud9 console and delete the environment.
+	=> Open the Kinesis console and delete the data stream and delivery stream.
+	=> Delete the following roles:
+		AWSCloud9SSMAccessRole
+		AWSServiceRoleForAWSCloud9
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

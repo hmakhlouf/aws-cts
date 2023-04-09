@@ -1,0 +1,84 @@
+----------------------------------------------------------------
+     script 1
+----------------------------------------------------------------
+%flink.ssql
+
+CREATE TABLE sensor_data (
+    sensor_id INTEGER,
+    current_temperature DOUBLE,
+    status VARCHAR(6),
+    event_time TIMESTAMP(3),
+    WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
+)
+PARTITIONED BY (sensor_id)
+WITH (
+    'connector' = 'kinesis',
+    'stream' = 'my-input-stream',
+    'aws.region' = 'us-east-1',
+    'scan.stream.initpos' = 'LATEST',
+    'format' = 'json',
+    'json.timestamp-format.standard' = 'ISO-8601'
+)
+
+
+
+----------------------------------------------------------------
+     script 2
+----------------------------------------------------------------
+%flink.ssql(type=update)
+
+SELECT * FROM sensor_data;
+
+
+----------------------------------------------------------------
+     script 3
+----------------------------------------------------------------
+%flink.ssql(type=update)
+
+SELECT sensor_data.status,
+       COUNT(*) AS num,
+       AVG(sensor_data.current_temperature) AS avg_current_temperature,
+       HOP_ROWTIME(event_time, INTERVAL '10' second, INTERVAL '1' minute) as hop_time
+FROM sensor_data
+GROUP BY HOP(event_time, INTERVAL '10' second, INTERVAL '1' minute), sensor_data.status;
+
+
+
+----------------------------------------------------------------
+     script 4
+----------------------------------------------------------------
+%flink.ssql
+
+CREATE TABLE sensor_state (
+    status VARCHAR(20),
+    num DOUBLE,
+    avg_current_temperature DOUBLE,
+    hop_time TIMESTAMP(3)
+)
+WITH (
+'connector' = 'kinesis',
+'stream' = 'my-output-stream',
+'aws.region' = 'us-east-1',
+'scan.stream.initpos' = 'LATEST',
+'format' = 'json',
+'json.timestamp-format.standard' = 'ISO-8601');
+
+
+
+----------------------------------------------------------------
+     script 5
+----------------------------------------------------------------
+%flink.ssql(type=update)
+
+INSERT INTO sensor_state
+SELECT sensor_data.status,
+    COUNT(*) AS num,
+    AVG(sensor_data.current_temperature) AS avg_current_temperature,
+    HOP_ROWTIME(event_time, INTERVAL '10' second, INTERVAL '1' minute) as hop_time
+FROM sensor_data
+GROUP BY HOP(event_time, INTERVAL '10' second, INTERVAL '1' minute), sensor_data.status;
+
+
+
+
+
