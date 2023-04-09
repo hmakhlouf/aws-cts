@@ -1,0 +1,24 @@
+
+  Lab 2 - Run a Hive script by adding a step in the EMR cluster
+  -------------------------------------------------------------
+
+	1. Spin up a 2 node  EMR cluster 
+           (Refer to Lab 1 for detail steps)
+
+	2. Go to the console and click on Steps Tab
+		
+	3. Click on 'Add step' button to add a step.
+		
+		Step settings:
+			Type: Hive programme
+			Name: Churn Modelling
+			Hive script location: s3://iquiz.emr/hive/hive_script_churn_modelling.hql
+			Input Amazon S3 location: s3://iquiz.emr/hive/Churn_Modelling.csv 
+			** NOTE: make sure you have those files in the corresponding S3 locations
+			Output S3 Location: s3://iquiz.emr/hive/output
+		Step action
+			Cancel and wait
+		Click on add step.
+
+	4. Wait until the step completes the execution.
+	5. Check for the output in the output S3 location.

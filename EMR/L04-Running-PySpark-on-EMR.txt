@@ -1,0 +1,32 @@
+
+  Lab 3 - Hive & DynamoDB integration on EMR
+  ------------------------------------------
+
+	1. Spin up an EMR cluster
+		NOTE: Make sure you select the following while creating the cluster
+
+		Application bundle: Custom
+		Applications included in bundle: Spark + all other default apps.
+
+	2. SSH to the EMR master node as 'hadoop' user
+	
+	3. Copy the PySpark Scripts to an S3 bucket:
+
+		s3://iquiz.emr/pyspark/scripts/top10movies-print.py
+		s3://iquiz.emr/pyspark/scripts/top10movies-savetos3.py
+
+	4 Execute the PySpark scripts on the EMR master node using the following commands:
+
+		spark-submit --master local s3://iquiz.emr/pyspark/scripts/top10movies-print.py
+		spark-submit --master local s3://iquiz.emr/pyspark/scripts/top10movies-savetos3.py
+		
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,73 @@
+
+  Lab 3 - Hive & DynamoDB integration on EMR
+  ------------------------------------------
+
+	1. Spin up an EMR cluster
+
+	2. SSH to the EMR master node as 'hadoop' user
+	
+	3. Copy the dataset from s3 to your local machine.
+
+		$aws s3 cp s3://iquiz.datasets/features-csv/features.csv .
+
+                --> You can also download public datasets
+		$wget https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/samples/features.zip			 
+		$unzip features.zip
+
+	4. Connect to Hive CLI, create a table and load the above data.
+
+		$hive
+
+		hive> create table hive_features (id bigint, name string, class string, state string, lat double, long double, elev_in_feet bigint) row format delimited fields terminated by ',' lines terminated by '\n';
+
+		hive> load data local inpath './features.csv' overwrite into table hive_features;
+
+		hive> select state, count(*) from hive_features group by state;
+
+		Now, we will copy the data from the above table into a dynamodb table.
+
+	5. Go to DynamoDB service from AWS management console.
+
+		Table Name: 	Features
+		Partition-Key: 	Id  (Type: Number)
+
+	6. Go back to HiveCLI and create an external Hive-DynamoDB mapped table:
+		
+		create external table dynamodb_features 
+		(id bigint, name string, class string, state string, lat double, long double, elev_in_feet bigint) 
+		row format delimited fields terminated by ',' 
+		lines terminated by '\n' 
+		stored by 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler' 
+		tblproperties(
+			"dynamodb.table.name" = "Features", 
+			"dynamodb.column.mapping"= "id:Id,name:Name,class:Class,state:State,lat:Latitude,long:Longitude,elev_in_feet:Elevation"
+		);
+
+
+create external table dynamodb_features (id bigint, name string, class string, state string, lat double, long double, elev_in_feet bigint) row format delimited fields terminated by ',' lines terminated by '\n' stored by 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler' tblproperties("dynamodb.table.name" = "Features", "dynamodb.column.mapping"= "id:Id,name:Name,class:Class,state:State,lat:Latitude,long:Longitude,elev_in_feet:Elevation");
+
+
+		At this point, neither "dynamodb_features" table (which is a hive external table), nor
+		Features table (which is a DynamoDB table) has any data.
+
+		
+       7. Now, load data into "dynamodb_features" table.
+
+		hive> insert overwrite table dynamodb_features select id, name, class, state, lat, long, elev_in_feet from hive_features limit 100;
+
+		This will load data not only into "dynamodb_features" but also populates the data
+		into Features table, which is a DynamoDB table.
+
+	8. Now, we can run queries on "dynamodb_features" which fetches data from 'Features' table.
+
+		hive> select distinct class from dynamodb_features order by class;
+
+
+
+
+
+
+
+
+
+

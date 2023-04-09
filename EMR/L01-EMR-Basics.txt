@@ -1,0 +1,120 @@
+
+  Lab 1 - Spin up an EMR Cluster and connect to it using SSH
+  ----------------------------------------------------------
+
+	1. Open EMR console page and select 'Amazon EMR running on Amazon EC2' option
+
+	2. Click on 'Clusters' menu option and click on 'Create cluster' button.
+
+	3. Enter the following details:
+
+		Name and applications
+			Name: CTSDemoCluster
+			Amazon EMR release: emr-6.10.0
+			Application bundle: Core Hadoop
+			Operating system options: Amazon Linux release
+			Automatically apply the latest Amazon Linux updates: uncheck  (i.e not required)
+			Amazon Linux release : select the default option
+
+			Click on 'Remove instance group' button under 'Task 1 of 1'
+
+		Cluster configuration
+			Choose 'Instance groups' option
+			Primary:   
+				Choose EC2 instance type: m4.large
+			Core: 
+				Choose EC2 instance type: m4.large
+			Cluster scaling and provisioning option
+				Choose 'Set cluster size manually' option
+
+		Cluster termination
+			Choose 'Terminate cluster after idle time (recommended)' option
+			  -> Give a suitable idle time period for auto-termination.
+
+		Security configuration and permissions
+			Amazon EC2 key pair for SSH to the cluster : choose your key-pair
+
+		Identity and Access Management (IAM) roles
+
+			Amazon EMR service role: Choose an existing service role
+			Service role: <select an existing role>
+
+			EC2 instance profile for Amazon EMR: Choose an existing instance profile
+			Instance profile : EMR_EC2_DefaultRole
+
+
+		* Leave all other options as default
+		* Click on 'Create cluster' button.	
+		
+
+	4. Wait until the cluster is launched and status shows as 'Waiting'
+	   * This may take a several minutes.
+
+   	5. Now, Let's connect to the master node using SSH
+
+		5.1 Click on 'Connect to the Master Node Using SSH' option
+		5.2 Copy the SSH command:			
+		5.3 Adjust the command to use the correct path of your pem file 
+		    (in my case the .pem file located under ~/.ssh folder)
+		5.4 Open a terminal and run the SSH command
+		    ssh -i ~/.ssh/ctsdemo-nvirginia-keypair.pem hadoop@ec2-54-88-87-24.compute-1.amazonaws.com
+		5.5 This will connect to EMR master node.
+
+	6. Run some HDFS commands and test the environment.
+
+		hadoop fs -ls /user/hadoop
+		hadoop fs -ls 
+		hadoop fs -mkdir testdir1
+		...
+		...
+
+		hive
+		show databases;
+		create database ctsdb1;
+		set hive.cli.print.current.db=true
+		use ctsdb1;
+		create table t1 (c1 int, c2 int);
+		insert into t1(c1, c2) values(1, 10), (2,20);
+		select * from t1;
+
+
+    Copy a file from S3 to EMRFS
+    ----------------------------
+
+	7. Go to the console and click on Steps Tab
+		
+	8. Click on 'Add step' button to add a step to copy files from S3 to EMRFS
+		
+		Step Type: Custom JAR	
+		Name: CopyDataFromS3  	(can be any name)
+		JAR Location: command-runner.jar
+		Arguments:
+			s3-dist-cp 
+			  --s3Endpoint=s3.amazonaws.com
+			  --src=s3://iquiz.emr/sampledata/file1.txt
+			  --dest=hdfs:///output
+
+			Ex:
+			s3-dist-cp --s3Endpoint=s3.amazonaws.com --src=s3://iquiz.emr/sampledata/file1.txt --dest=hdfs:///output
+			
+			note: entire command should be in a single line.
+			ref url: https://docs.aws.amazon.com/emr/latest/ReleaseGuide/UsingEMR_s3distcp.html	
+		
+	9. Click on 'Add' button to add the step
+	   ** Wait until the step is completed. This may take a few minutes. 
+
+	10. Check the output in SSH terminal	
+
+		hadoop fs -ls /output
+	
+
+	----------------------------------------------------------
+	
+
+    	Reference URLs:
+
+    	* https://docs.aws.amazon.com/emr/index.html
+    	* https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-gs.html
+
+
+	
