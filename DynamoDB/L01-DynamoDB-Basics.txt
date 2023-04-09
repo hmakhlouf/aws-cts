@@ -1,0 +1,50 @@
+
+  Lab 1 - DynamoDB Basic Operations
+  ---------------------------------
+
+	1. Open the DynamoDB Management Console
+
+	2. Cick on 'Create table' button and fill with the following details:
+		Table name: users_cts
+		Partition key: Id, Type: Number
+		Sort key: Name, Type: String
+		Table settings: Default settings
+		
+		Click on 'Create Table' button
+			
+	3. Insert some items into the table.
+		3.1 Select the table from the list of tables
+		3.2 Click on 'Explore table items' button
+		3.3 Under the 'Items Retuned' section, Click on 'Create item' button
+		3.4 Enter the details in the form and Click on 'Create item' button
+		3.5 You can also enter the items using JSON. Click on 'JSON view' tab in the 'Create item' page.
+		3.6 Enter the following JSON snippet and Click on 'Create item' button
+
+			{
+			  "Id": {
+			    "N": "2"
+			  },
+			  "Name": {
+			    "S": "Aditya"
+			  },
+			  "Age": {
+			    "N": "40"
+			  }
+			}
+			
+	4. Scan/Query the Data
+
+		** Scan operation fetches all items in the table **
+		** Query allows you to fetch the data based on conditions defined on the 'Partition Key' **
+		
+		4.1 Select the table and click on 'Explore table items' button
+		4.2 Select 'Scan' option and click on 'Run'
+		4.3 Select 'Query' radio option
+			
+		
+
+
+
+
+
+
