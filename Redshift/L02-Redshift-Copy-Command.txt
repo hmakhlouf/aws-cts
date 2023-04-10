@@ -45,8 +45,8 @@
 
                   Note down the following details:		
 
-			Access key ID: 	   <your access key id>   	AKIASJLVRN55UKZ6SY4O
-			Secret access key: <your secret access key>	YK/zxLHQAkTlhbUY9GX4rkjmrw6Vh0T5LowzpjNv
+			Access key ID: 	   <your access key id>   	
+			Secret access key: <your secret access key>	
 
 
    5. Copy the data files to be copied to a S3 bucket.
