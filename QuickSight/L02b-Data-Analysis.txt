@@ -1,0 +1,201 @@
+
+  Lab 2b - Explore data preparation in QuickSight 
+  -----------------------------------------------
+   ** NOTE: This is a continuation of Lab 2 **
+	
+	1. Open the QuickSight console and click on 'Analysis' menu option from left-menu.
+	
+	2. Create a new analysis
+		
+		2.1 Click on 'New Analysis' button and select 'population-data' 
+			(this is the dataset we created in the last lab)			
+		2.2 Click on 'USE IN ANALYSIS' button
+		2.3 Select 'Interactive sheet' option and click on 'Create' button.
+		
+		We will now be directed to 'Analysis' section of QuickSight.
+		We create visuals here.
+		
+	3. You can add and delete visuals here. Lets work wih our first visual.
+	
+		3.1 Delete the 'Autograph' visual by clicking on context menu (verticle icon) and 'Delete' option.
+		3.2 Add a new visual by clicking on 'Add' button (towards top-left) and selecting 'Add visual' option
+		    You can resize the visual (by dragging the edges) and can move around the visual on the screen.
+		3.3 Select 'Line chart' from the visual types. 
+			Observe the 'fields well' section where you define dimensions and measures.
+		3.4 Drop the 'year' field on the 'x-axis' (dimension); 
+					 'pop-total' field on the 'value' (measure);
+					 'region' field to the 'color'
+		3.5 Click on the 'Format visual' (pencil icon) on the context menu on the visual	
+		    Examine the options available here.
+		
+			3.5.6 Click on 'Edit title' button to change the title on the visual.
+		3.6 Sort the X-axis data in the ascending order
+			Click on the context menu on the x-axis in the field well, and set the sorting order. 
+		3.7 We can change the field type between dimension and measure.
+			Click on the context menu of a field and select 'Convert to dimension/measure' options as suited.
+			
+	4. Add an additional dataset (stockprice.csv) to our analysis
+		
+		4.1 Upload 'stockprice.csv" to the same bucket we created in previous lab. (cts-quicksight)
+		4.2 Create a manifest JSON file for this dataset with the correct URI (stockprice-manifest.json) 
+		    [Refer to the previous lab for details)
+		4.3 On the QuickSight console, clik on Home icon. 
+		4.4 Click on 'New Analysis' -> 'New Dataset' -> S3
+		4.5 Enter the details and click on Connect
+				Data source name: stockprice
+				Upload manifest file: Upload	
+				Upload the manifest file created in 4.2	
+		4.6 Click on 'Edit/preview data' button		
+		
+		You are now in the 'Data preparation' section of QuickSight.
+		
+	5. Let's prepare this data to be added to the analysis. 
+	
+		As the data is tab separated, and if your manifest file says it as CSV, the data loaded into
+		QuickSight looks all messed up. Lets fix this.
+		
+		5.1 Click on the down arrow button on the 'browser.csv' module (on the top pane above the data pane) 
+			and select 'Configure upload settings' option.
+		5.2 Select the following options
+				File format: Tab separated (TSV)
+				Delimiter: ;  (semi-colon is the delimiter in your data)
+				Leave all others as default
+		5.3 Edit the name to 'stockprices-dataset'
+		5.4 Click on 'SAVE & PUBLISH' button to save the dataset.
+		
+	6. Add the new dataset (that we just created) to our analysis
+		
+		6.1 Open the QuickSight console and click on 'Analysis' menu option from left-menu
+		6.2 Select the analysis we created earlier again. (population-dataset-analysis)
+		6.3 Click on the pencil icon next to the 'Dataset' dropdown (towards top-left)
+		6.4 Click on 'Add dataset' button.
+		6.5 Select 'stockprices-dataset' (created in steps 4 & 5)and add the dataset.
+		
+	7. Add a new visual to our analysis for the new dataset (i.e stockprices-dataset)
+	
+		7.1 Click on the Add button (right below the home icon) and click 'Add visual' option.
+		7.2 Resize the visual to fit the screen.
+		7.3 Make sure 'stockprices-dataset' is selected in the 'Datasets' dropdown.
+		7.4 Make sure the new visual is selected and select 'Line chart' visual type.
+		7.5 Drop 'Date' to the 'x-axis' and 'Microsoft price' to the 'value' in the field wells.			
+		
+	8. Understanding Field Formatting, Aggregation and Granularity
+	
+		8.1 Change the granularity of the stocks visual from day to month.
+			Click on the X-axis menu (in fields well) and select Month as aggregate.
+			
+		8.2 Change the aggregate to 'average' on the stock price
+			Click on the value menu (in fields well) and select Average as aggregate.
+			
+		8.3 Change the data format of the stock price to currency. 
+			Click on the value menu (in fields well) and select Show as -> Currency.
+			
+	9. Add title and description to your sheet of the analysis.
+	
+		9.1 Click on the Add button (right below the home icon) and check out 'Add title' 
+		    and 'Add description' options.
+			
+    10. Add a new 'Verticle bar chart' visual with drilldown option
+	
+		10.1 Add a new visual (described @ 3.2) and place it below the the other two across the full page.
+		10.2 Select 'verticle bar chart' as visual type.
+		10.3 Drop 'age-group' to the 'X-axis' and 'pop-male' to the 'value' on field well
+		10.4 Drop 'age-range' on x-axis right below the 'age-group' column. (make sure you see 'drill down' tool tip)
+			 This adds a drill-down option to the age-group.
+		10.5 Now right-click on any bar on the chart and select 'drill-down' option to see the details.
+			 You can use up and down arrows to switch between main & drill-down data. 
+			 
+	11. Add a new 'Tree map' visual.
+		
+		11.1 Add a new visual (described @ 3.2) and place it at a suitable location and size.
+		11.2 Select 'Tree map' as visual type. 
+			 Add the following to the field wells:
+				Group-by: country
+				Size: pop-total
+				
+	12. Filters: Apply filters across all or specifc visuals.
+		
+		Filters can be applied to a specific visual, list of visuals or all visuals that are
+		created from a specifc dataset. 
+		
+		12.1 Create a Date filter for the 'stockprice' visual (created in step 7). This filter
+			 is applied only to this visual
+			
+				-> Select the visual, click on 'Filters' tab in the left verticle menu.
+				-> Click on 'ADD FILTER' button and select 'Date'
+				-> Click on 'Date' filter and set the following:
+					Applied to: Only this visual
+					Filter type: Date and time range
+					Condition: Between
+					Start date: 2015/01/01
+					End date: 2016/12/31
+				-> Click 'Apply' button	
+				
+		12.2 Create a String filter (on 'region' field) to be applied to all visuals created from population dataset.
+		
+			-> Select the first visual, click on 'Filters' tab in the left verticle menu.
+			-> Click on 'ADD FILTER' button and select 'region'
+				-> Click on 'Date' filter and set the following:
+					Applied to: All visuals of this dataset
+					Filter type: Filter list
+					Search values: Check only Asia, Europe and North America
+				-> Click 'Apply' button	
+		
+		12.3 Observe that the above filter is applied to all visuals created from the population dataset.
+			
+		12.4 Add a filter (on 'country' field) to 'Tree map' visual
+			-> Select the first visual, click on 'Filters' tab in the left verticle menu.
+			-> Click on 'ADD FILTER' button and select 'region'
+				-> Click on 'Date' filter and set the following:
+					Applied to: Only this visual
+					Filter type: Custom filter list
+					List: India, Germany, France, Indonesia (add each country in a separate line)
+				-> Click 'Apply' button	 
+				
+	13. Add a new 'Pivot table' visual.
+		13.1 Add a new visual (described @ 3.2) and place it at a suitable location and size.
+		
+		13.2 Select 'Pivot table' as visual type. 
+			 Add the following to the field wells:
+				Rows: region
+				Columns: Year
+				Values: pop-total
+				
+		13.3 Well, the data is not really cool. Lets transpose it for more visibility.
+			 Click on 'swap rows and columns' icon on the visual's menu. 
+			 
+
+	14 Add a new 'Heat map' visual
+		14.1 Add a new visual (described @ 3.2) and place it at a suitable location and size.
+		
+		14.2 Select 'Heat map' as visual type. 
+			 Add the following to the field wells:
+				Rows: region
+				Columns: age-group
+				Values: pop-male
+				
+	15 Add a new 'KPI' visual
+	
+		15.1 From 'Dataset' drop down select 'stockprices-dataset'
+		15.2 Add a new visual (described @ 3.2) and place it at a suitable location and size.		
+		15.3 Select 'Key Performance Indicator (KPI)' as visual type. 
+			 Add the following to the field wells:
+				Value: Microsoft Change %
+				Target value: Apple Change %
+		15.4 Let's format this a bit. Select your visual, and click on pencil icon	
+			 Uncheck 'Show title' option
+			 Uncheck 'Show progress bar' option
+			 Change 'Comparision method' to 'Difference as percent'
+		15.5 In the field wells, for 'value', change the 'Show as' to 'percent'		
+		
+	16 Add another 'KPI' visual
+	
+		16.1 From 'Dataset' drop down select 'stockprices-dataset'
+		16.2 Add a new visual (described @ 3.2) and place it at a suitable location and size.		
+		16.3 Select 'Key Performance Indicator (KPI)' as visual type. 
+			 Add the following to the field wells:
+				Value: Microsoft Price
+				Target group: Date    (!! this is 'Target group', not 'Target value' !!)
+		16.4 In the field wells:
+				Change the 'Date' granularity to 'Aggregate: Month'
+				Change the 'Microsoft Price' format to 'Show as: Currency'

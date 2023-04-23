@@ -1,0 +1,115 @@
+
+  Lab 2 - Explore data preparation in QuickSight 
+  ----------------------------------------------
+
+	1. Create an S3 bucket and upload the following files to it.
+	
+			Bucket name: cts-quicksight
+			Files to be uploaded: population.csv
+	
+	2. Create a manifest file for the above data file and upload it to the bucket	
+	
+		2.1 Open population-manifest.json file
+		2.2 Change the URI to the bucket S3 URI. 
+		2.3 Upload the manifest file to the same bucket
+		
+	3. Add  permission to QuickSight to access the S3 bucket you created earlier
+	
+		3.1 Click on your account icon (top-right head icon) and select 'Manage QuickSight'
+		3.2 Select 'Security and permissions' button from left-menu.
+		3.3 Click on 'Manage' button
+		3.4 Click on 'Select S3 buckets' link and check your bucket (i.e cts-quicksight)
+		3.5 Click 'Save' button to save changes. 
+		
+	4. Import data file from S3 manifest to QuickSight for data preparation
+	
+		4.1 Open QuickSight console
+		4.2 Click on 'Datasets' menu option and click on 'New dataset' button
+		4.3 Click on 'S3' option and fill the details
+			Data source name: population-data
+			Upload a manifest file: URL
+			Enter the URL: s3://cts-quicksight/population-manifest.json
+			NOTE: Yoou can alao upload the manifest file by selecting Upload option.
+		4.4 Click on 'Connect' button
+		4.5 Click on 'Edit/preview data'
+	
+	5. Look around the interface and Save your data into SPICE engine.
+	
+		5.1 Click on 'SAVE & PUBLISH' button to save.
+		5.2 Click on the QuickSight home button (top-left icon)
+		5.3 Click on 'Datasets' option and select your dataset.
+		5.4 Make sure your data is 100% imported.
+		5.5 Click on 'EDIT DATASET' button (towards top-right)
+		
+	6. Let's do some data preparation	
+	
+		6.1 We can rename the columns by clicking on the column name in the dataset tab.
+			Rename columns as follows:
+				Year to year
+				Region-Code to region-code
+				NAME to region
+				
+		6.2 Save the changes by clicking on 'SAVE & PUBLISH' button (towards top)
+				
+		6.3 We can also change the data-types of the columns
+			Click on the data types for the columns below the column names row, to change the data types
+		
+		6.4 We can exclude/include the fields by choosing in the options from the field menu (verticle dots) 
+		
+		6.5 Add a new calculation field called pop-total (for total population)
+			6.5.1 Click on 'Add calculation field' button
+			6.5.2 Add the following expression in the formula textarea:
+				{pop-fem} + {pop-male}	
+		6.6 Save the changes by clicking on 'SAVE & PUBLISH' button (towards top)
+			
+	7. Let's work with functions and operators
+	
+		Checkout the function reference documentation here:
+		https://docs.aws.amazon.com/quicksight/latest/user/functions-by-category.html
+		
+		7.1 Create a new calculated field called 'region-code-new' with the following expression 
+		        expression: concat({country}, " ", replace(toUpper({region-code}), "!", ")"))
+		7.2 Click on Save button to save changes.
+		7.3 Exclude 'region-code' field  (step 6.4)
+		7.4 Create a new calculated field called 'age-range-max' with the following expression 
+		        expression: right({age-range}, 2)
+		7.4 Save the changes by clicking on 'SAVE & PUBLISH' button 
+			
+	8. Let's add few more calculated fields
+
+		8.1 Create a new calculated field called 'age-group' with the following expression 
+					ifelse(
+						{age-range-max} = "04" OR {age-range-max} = "09", "Child",
+						{age-range-max} = "14" OR {age-range-max} = "19", "Teenager",
+						{age-range-max} = "24" OR {age-range-max} = "29", "Young Adult",
+						{age-range-max} = "49" OR {age-range-max} = "64", "Adult",
+						"Senior"
+					)
+					
+		8.2 Create a new calculated field called 'pop-fem-share' with the following expression 
+					ifelse({pop-total} = 0, 0, round({pop-fem}/{pop-total}, 3))
+					
+		8.3 Create a new calculated field called 'pop-male-share' with the following expression 
+					ifelse({pop-total} = 0, 0, round({pop-male}/{pop-total}, 3))
+					
+		8.4 Save the changes by clicking on 'SAVE & PUBLISH' button 
+
+					
+	9. Let's add some filters to our data.
+	
+		9.1 From the 'Filters' link (towards left-bottom), Click on 'Add filter' and select 'year'
+				Filter condition: greater than or equal to
+				Minimum Value: 1990
+			Click on 'Apply' to add the filter.
+			
+		9.1 From the 'Filters' link, Click on 'Add filter' and select 'country'
+				Filter type: Custom filter list
+				Filter condition: Include
+				List: Algeria
+					  Angola       
+			Click on 'Apply' to add the filter.
+			
+		9.2 As we need more data, let disable the filter we created in prior step
+			Click country filter menu (verticle dots) and select 'Disable' option.
+			
+		9.3 Save the changes by clicking on 'SAVE & PUBLISH' button 

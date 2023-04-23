@@ -1,0 +1,28 @@
+
+  Lab 2d - Understanding the Refresh & Export options
+  ---------------------------------------------------- 
+   ** NOTE: This is a continuation of Lab 2b **
+	
+	1. Understand the data refresh options in QuickSight
+		1.1 Go to the console and open our datasets
+		1.2 Select 'stockprices-dataset' dataset 
+		1.3 Go to 'Refresh' tab
+		
+		NOTE: We have two options to refresh:
+			-> Manually refresh the data	
+			-> Create a refresh schedule
+			
+	2. Let's add a new schedule to refresh our dataset.
+		2.1 Click on 'ADD NEW SCHEDULE' button
+		2.2 Specify a timezone, start time and frequency as required
+		2.3 Click on Save		
+	
+	3. Exporting our visuals' data as .csv files
+		3.1 Open the analysis
+		3.2 On the visual's menu, select 'Export to CSV' options
+		3.3 A CSV file related to that visual will be downloaded.
+		
+
+		
+	
+	

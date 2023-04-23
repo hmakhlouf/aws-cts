@@ -1,0 +1,45 @@
+
+  Lab 2c - Create Dashboards
+  ---------------------------
+   ** NOTE: This is a continuation of Lab 2b **
+	
+	A dashboard is the published version of an analysis. 
+	  => You can share a dashboard with other users of QuickSight. 
+	  => You specify who has access and what they can do with it.
+	  
+	1. Go to QuickSight and open an anlysis
+	
+	2. Duplicate the existing sheet in your analysis.
+		2.1 Click on the down-arrow icon on your and select 'duplicate' option.
+		
+	3. Name the sheets appropriatly.
+		3.1 You can double-click on a sheet to rename it
+		3.2 Name the new sheet as 'Stocks-Analysis'
+	
+	4. Open the 'Stocks-Analysis' sheet and delete all visuals based on population dataset.
+	   The current sheet should have only those sheets that are based on stocks dataset.
+	   
+	5. Create a Dashboard		
+		5.1 Click on the 'share' icon on your analysis, and select 'publish dashboard' option
+			(towards the top-right corner just below the head icon)
+		5.2 Give a name - 'Stocks Dashboard'
+		5.3 Keep all options as defaults and click on 'Publish Dashboard' button.
+		This dashboard has both sheets of your analysis.
+		
+	6. Create another Dashboard
+		6.1 Click on the 'share' icon on your analysis, and select 'publish dashboard' option
+			(towards the top-right corner just below the head icon)
+		6.2 Give a name - 'Stocks Dashboard'
+		6.3 From the options select only 'Stocks-Analysis' sheet and click on 'Publish Dashboard' button.
+		This dashboard has only one sheet of your analysis.
+		
+	7. You can now access these dashboards from the Dashboards menu option.
+		
+		
+		
+
+		
+
+		
+	
+	
